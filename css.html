@@ -94,11 +94,7 @@
     animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  /* ======================================================
-     RESPONSIVE RULES UNTUK LAYAR PONSEL & TABLET (< 1024px)
-     ====================================================== */
   @media (max-width: 1023px) {
-    /* Proteksi Mutlak: Jangan pernah render desktop sidebar di layar HP */
     #mainAppSidebar {
       display: none !important;
       width: 0 !important;
@@ -107,7 +103,6 @@
       visibility: hidden !important;
     }
 
-    /* Paksa workspace konten utama menjadi 1 Kolom Vertikal Penuh 100% */
     #mainAppWorkspace {
       width: 100% !important;
       max-width: 100% !important;
@@ -117,21 +112,18 @@
       padding-right: 0 !important;
     }
 
-    /* Hilangkan kemungkinan horizontal overflow pada view aktif */
     .app-view {
       width: 100% !important;
       max-width: 100% !important;
       overflow-x: hidden !important;
     }
 
-    /* Sesuaikan padding header mobile agar pas */
     #mainAppHeader {
       width: 100% !important;
       max-width: 100vw !important;
     }
   }
 
-  /* Transisi Halus untuk Mobile Drawer & Backdrop */
   #mobileDrawer {
     will-change: transform;
     transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
@@ -142,7 +134,6 @@
     transition: opacity 0.25s ease-in-out;
   }
 
-  /* Optimasi area sentuh tombol (touch target) pada mobile */
   @media (pointer: coarse) {
     .nav-btn, button, a {
       touch-action: manipulation;
@@ -189,7 +180,33 @@
     color: transparent;
   }
 
-  /* Tata Letak Media Cetak (Print Styles) */
+  #qr-reader-respon, #qr-reader {
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: transparent !important;
+    overflow: hidden !important;
+  }
+
+  #qr-reader-respon video, #qr-reader video {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 0.75rem !important;
+    display: block !important;
+    margin: 0 auto !important;
+  }
+
+  #qr-reader-respon #qr-shaded-region, #qr-reader #qr-shaded-region {
+    border-radius: 0.75rem !important;
+  }
+
   @media print {
     body * {
       visibility: hidden;
@@ -225,7 +242,7 @@
     }
   }
 
-  /* Format Kisi Label Stiker Tom & Jerry 103 (12 Label per Lembar: 3 Kolom x 4 Baris) */
+  /* Format Kisi Label Stiker Tom & Jerry */
   .grid-label-103 {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -238,7 +255,6 @@
     page-break-inside: avoid;
   }
 
-  /* Format Kisi Label Stiker Tom & Jerry 121 (10 Label per Lembar: 2 Kolom x 5 Baris) */
   .grid-label-121 {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
