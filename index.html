@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DIGITAS SARPRAS - Manajemen Aset Sekolah</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=Nunito:wght@400;600;700;800&family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- QR Code Generator Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
+  <!-- HTML5 QR Code Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <!-- Pemuatan Modular CSS & Tailwind Config (Google Apps Script Engine) -->
+  <?!= include('css'); ?>
+
+  <!-- Client-Side Modular Loader Otomatis Khusus GitHub Pages / Static Hosting -->
+  <script>
+    (function() {
+      if (typeof google === 'undefined' || !google.script) {
+        fetch('css.html')
+          .then(function(res) { return res.text(); })
+          .then(function(html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+            doc.querySelectorAll('style').forEach(function(st) { document.head.appendChild(st); });
+            doc.querySelectorAll('script').forEach(function(sc) {
+              var s = document.createElement('script');
+              s.textContent = sc.textContent;
+              document.head.appendChild(s);
+            });
+          })
+          .catch(function(err) { console.warn('[GitHub Pages] Pemuatan css.html statis:', err); });
+      }
+    })();
+  </script>
+</head>
+
+<body class="text-slate-800 antialiased min-h-screen flex flex-col selection:bg-magenta-200 selection:text-magenta-900">
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none max-w-sm w-full px-4"></div>
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen" class="min-h-screen w-full relative flex items-center justify-center p-4 sm:p-6 overflow-hidden select-none">
+    <div class="absolute inset-0 z-0 overflow-hidden">
+      <img id="loginBgImage" 
+           src="https://drive.google.com/thumbnail?id=1C-zcPKOUlNQ4Dz0NMQOS7podKKs5ygf0&sz=w1000" 
+           alt="Background Sekolah" 
+           class="w-full h-full object-cover object-center transform scale-105 transition-all duration-700">
+      <div class="absolute inset-0 bg-gradient-to-b from-black/25 via-black/40 to-black/75 backdrop-blur-[1px]"></div>
+    </div>
+
+    <div class="relative z-10 w-full max-w-[360px] sm:max-w-[400px] flex flex-col items-center animate-fadeIn">
+      <div class="relative mb-5 flex flex-col items-center">
+        <div id="loginLogoContainer" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/20 backdrop-blur-md border border-white/50 shadow-2xl flex items-center justify-center p-1 relative overflow-hidden group">
+          <img src="https://drive.google.com/thumbnail?id=1vI-Dxzf7nKVE5Mt4ADQn53qlfrsOGbjG&sz=w500" 
+            alt="Logo Sekolah" 
+            width="120" 
+            height="120" 
+            style="object-fit: contain;">
+        </div>
+        <h2 id="loginAppName" class="text-white text-xl sm:text-2xl font-black tracking-wide text-center mt-3 drop-shadow-md">
+          DIGITAS SARPRAS
+        </h2>
+        <p id="loginSchoolName" class="text-white/80 text-xs font-semibold tracking-wider text-center mt-0.5 drop-shadow-sm">
+          SMP Negeri 2 Banyuwangi
+        </p>
+      </div>
+
+      <form id="formLogin" class="w-full space-y-3.5" onsubmit="event.preventDefault(); handleLogin();">
+        <div class="relative flex items-center">
+          <span class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/60 text-sm">
+            <i class="fa-solid fa-user"></i>
+          </span>
+          <input type="text" 
+                 id="loginUsername" 
+                 required 
+                 placeholder="Username" 
+                 autocomplete="off"
+                 onfocus="this.dataset.placeholder = this.placeholder; this.placeholder = '';"
+                 onblur="if (!this.placeholder) this.placeholder = this.dataset.placeholder || 'Username';"
+                 class="glass-input-pill w-full py-3.5 pl-11 pr-5 rounded-full text-xs sm:text-sm font-medium transition duration-200">
+        </div>
+
+        <div class="relative flex items-center">
+          <span class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/60 text-sm">
+            <i class="fa-solid fa-lock"></i>
+          </span>
+          <input type="password" 
+                 id="loginPassword" 
+                 required 
+                 placeholder="Password" 
+                 autocomplete="off"
+                 onfocus="this.dataset.placeholder = this.placeholder; this.placeholder = '';"
+                 onblur="if (!this.placeholder) this.placeholder = this.dataset.placeholder || 'Password';"
+                 class="glass-input-pill w-full py-3.5 pl-11 pr-11 rounded-full text-xs sm:text-sm font-medium transition duration-200 tracking-wider">
+          <button type="button" 
+                  onclick="togglePasswordVisibility('loginPassword', this)" 
+                  title="Tampilkan / Sembunyikan Password"
+                  class="absolute inset-y-0 right-0 pr-4 flex items-center text-white/70 hover:text-white transition focus:outline-none">
+            <i class="fa-regular fa-eye text-sm"></i>
+          </button>
+        </div>
+
+        <button type="submit" 
+                id="btnLoginSubmit"
+                class="w-full py-3.5 px-6 dynamic-theme-btn text-white font-bold text-xs sm:text-sm rounded-full shadow-lg hover:brightness-110 active:scale-[0.99] transition-all duration-200 flex items-center justify-center space-x-2">
+          <span>Log In</span>
+        </button>
+
+        <div class="pt-2 text-center">
+          <p class="text-[11px] text-white/80 font-medium tracking-wide">
+            Akses Tamu / Guru: 
+            <span class="font-bold text-white bg-white/20 px-2 py-0.5 rounded-full border border-white/30 cursor-pointer hover:bg-white/30 transition inline-block ml-1"
+                  onclick="document.getElementById('loginUsername').value='guru1'; document.getElementById('loginPassword').value='guru123';"
+                  title="Klik untuk mengisi otomatis">
+              guru1 | guru123
+            </span>
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP WORKSPACE CONTAINER -->
+  <div id="mainApp" class="hidden flex-1 flex flex-col min-h-screen">    
+    <header id="mainAppHeader" class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-cream-200/80 shadow-xs">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-14 sm:h-16 gap-2">
+          
+          <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+            <button onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-cream-100 focus:outline-none shrink-0" aria-label="Buka Menu Navigasi">
+              <i class="fa-solid fa-bars text-base sm:text-lg"></i>
+            </button>
+            <div class="flex items-center space-x-2 sm:space-x-3 cursor-pointer min-w-0" onclick="navigateTo('dashboard')">
+              <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl dynamic-gradient-banner text-white flex items-center justify-center shadow-md shrink-0">
+                <i class="fa-solid fa-cubes text-sm sm:text-lg"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <h1 id="headerAppName" class="font-bold text-slate-800 text-xs sm:text-base leading-tight truncate">DIGITAS SARPRAS</h1>
+                <p id="headerSchoolName" class="text-[9px] sm:text-[11px] font-semibold dynamic-theme-text truncate">SMP NEGERI 2 BANYUWANGI</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
+            <button id="btnSyncDatabase" onclick="syncDatabaseToSheets()" title="Sinkronkan seluruh data lokal ke Google Sheets"
+              class="role-non-guest inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold transition shadow-xs">
+              <i id="iconSyncDatabase" class="fa-solid fa-cloud-arrow-up text-xs sm:text-sm"></i>
+              <span id="textSyncDatabase" class="hidden md:inline">Sinkron</span>
+              <span id="badgeSyncStatus" class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+            </button>
+
+            <button onclick="navigateTo('scan')" title="Pindai QR Code" 
+              class="role-non-guest hidden md:inline-flex items-center space-x-2 px-3.5 py-2 rounded-xl dynamic-theme-bg-light dynamic-theme-text dynamic-theme-border border text-xs font-semibold transition hover:opacity-85">
+              <i class="fa-solid fa-qrcode text-sm"></i>
+              <span>Pindai QR</span>
+            </button>
+
+            <div class="relative">
+              <button onclick="toggleUserDropdown()" class="flex items-center space-x-1.5 sm:space-x-2.5 p-1 sm:px-3 sm:py-2 rounded-xl hover:bg-cream-100 border border-transparent hover:border-cream-200 transition">
+                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full dynamic-theme-bg-light dynamic-theme-text font-bold flex items-center justify-center text-[10px] sm:text-xs border dynamic-theme-border" id="userAvatarText">
+                  AD
+                </div>
+                <div class="hidden md:block text-left">
+                  <p id="userNameDisplay" class="text-xs font-bold text-slate-800 leading-tight">Admin Utama</p>
+                  <p id="userRoleDisplay" class="text-[10px] font-medium dynamic-theme-text">Administrator</p>
+                </div>
+                <i class="fa-solid fa-chevron-down text-[8px] sm:text-[10px] text-slate-400"></i>
+              </button>
+
+              <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-soft border border-cream-200 py-2 z-50 animate-fadeIn">
+                <div class="px-4 py-2 border-b border-cream-100">
+                  <p class="text-xs font-semibold text-slate-800" id="dropdownUserName">Administrator</p>
+                  <p class="text-[11px] text-slate-500" id="dropdownUserEmail">admin@sarpras.sch.id</p>
+                </div>
+                <a href="javascript:void(0)" onclick="navigateTo('cetak-qr'); toggleUserDropdown();" class="role-admin-only flex items-center space-x-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-cream-50 hover:text-magenta-700">
+                  <i class="fa-solid fa-print text-slate-400"></i>
+                  <span>Cetak QR-Code Massal</span>
+                </a>
+                <a href="javascript:void(0)" onclick="navigateTo('settings'); toggleUserDropdown();" class="role-admin-only flex items-center space-x-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-cream-50 hover:text-magenta-700">
+                  <i class="fa-solid fa-sliders text-slate-400"></i>
+                  <span>Pengaturan Sistem</span>
+                </a>
+                <a href="javascript:void(0)" onclick="navigateTo('users'); toggleUserDropdown();" class="role-admin-only flex items-center space-x-2 px-4 py-2.5 text-xs text-slate-700 hover:bg-cream-50 hover:text-magenta-700">
+                  <i class="fa-solid fa-users-gear text-slate-400"></i>
+                  <span>Manajemen Akun</span>
+                </a>
+                <div class="border-t border-cream-100 my-1"></div>
+                <a href="javascript:void(0)" onclick="handleLogout()" class="flex items-center space-x-2 px-4 py-2.5 text-xs text-rose-600 hover:bg-rose-50">
+                  <i class="fa-solid fa-right-from-bracket"></i>
+                  <span>Keluar</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="flex-1 flex flex-col lg:flex-row max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 gap-4 lg:gap-6">
+      
+      <!-- DESKTOP SIDEBAR -->
+      <aside id="mainAppSidebar" class="hidden lg:block w-64 shrink-0">
+        <div class="sticky top-24 bg-white/95 backdrop-blur-md rounded-2xl p-4 border border-cream-200/80 shadow-soft">
+          
+          <div class="nav-section-main">
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">Navigasi Utama</p>
+            <nav class="space-y-1">
+              <button onclick="navigateTo('dashboard')" data-nav="dashboard" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-100 transition">
+                <i class="fa-solid fa-chart-pie w-5 text-center text-slate-400"></i>
+                <span>Dashboard</span>
+              </button>
+              <button onclick="navigateTo('assets')" data-nav="assets" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-100 transition">
+                <i class="fa-solid fa-boxes-stacked w-5 text-center text-slate-400"></i>
+                <span>Data Aset Sarpras</span>
+              </button>
+              <button onclick="navigateTo('maintenance')" data-nav="maintenance" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-100 transition">
+                <div class="flex items-center space-x-3">
+                  <i class="fa-solid fa-screwdriver-wrench w-5 text-center text-slate-400"></i>
+                  <span>Servis & Maintenance</span>
+                </div>
+                <span id="badgePendingMaint" class="hidden px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-700">0</span>
+              </button>
+              <button onclick="navigateTo('procurements')" data-nav="procurements" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-100 transition">
+                <i class="fa-solid fa-cart-shopping w-5 text-center text-slate-400"></i>
+                <span>Log Pengadaan & Afkir</span>
+              </button>
+              <button onclick="navigateTo('scan')" data-nav="scan" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-100 transition">
+                <i class="fa-solid fa-qrcode w-5 text-center text-slate-400"></i>
+                <span>Pindai QR-Code</span>
+              </button>
+            </nav>
+            <div class="my-4 border-t border-cream-100"></div>
+          </div>
+
+          <div class="nav-section-pelayanan">
+            <p class="text-[11px] font-bold text-amber-600 uppercase tracking-wider px-3 mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-hand-holding-heart text-[10px]"></i>
+              <span>Pelayanan</span>
+            </p>
+            <nav class="space-y-1">
+              <button onclick="navigateTo('respon')" data-nav="respon" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-100 transition">
+                <i class="fa-solid fa-bolt w-5 text-center text-amber-500"></i>
+                <span>Tanggap Cepat (Respon)</span>
+              </button>
+            </nav>
+            <div class="my-4 border-t border-cream-100"></div>
+          </div>
+
+          <div class="nav-section-infra">
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">Lokasi & Infrastruktur</p>
+            <nav class="space-y-1">
+              <button onclick="navigateTo('buildings')" data-nav="buildings" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-100 transition">
+                <i class="fa-solid fa-school w-5 text-center text-slate-400"></i>
+                <span>Data Bangunan</span>
+              </button>
+              <button onclick="navigateTo('rooms')" data-nav="rooms" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-100 transition">
+                <i class="fa-solid fa-door-open w-5 text-center text-slate-400"></i>
+                <span>Data Ruang</span>
+              </button>
+            </nav>
+          </div>
+
+          <div class="role-admin-only">
+            <div class="my-4 border-t border-cream-100"></div>
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">Administrasi</p>
+            <nav class="space-y-1">
+              <button onclick="navigateTo('users')" data-nav="users" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-100 transition">
+                <i class="fa-solid fa-users-gear w-5 text-center text-slate-400"></i>
+                <span>Akun Pengguna</span>
+              </button>
+              <button onclick="navigateTo('cetak-qr')" data-nav="cetak-qr" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-100 transition">
+                <i class="fa-solid fa-print w-5 text-center text-slate-400"></i>
+                <span>Cetak QR-Code</span>
+              </button>
+              <button onclick="navigateTo('settings')" data-nav="settings" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-100 transition">
+                <i class="fa-solid fa-palette w-5 text-center text-slate-400"></i>
+                <span>Pengaturan & Tema</span>
+              </button>
+            </nav>
+          </div>
+        </div>
+      </aside>
+
+      <!-- MOBILE DRAWER SIDEBAR -->
+      <div id="mobileDrawerBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden transition-opacity lg:hidden"></div>
+      <div id="mobileDrawer" class="fixed inset-y-0 left-0 max-w-xs w-4/5 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 ease-in-out lg:hidden flex flex-col p-5">
+        <div class="flex items-center justify-between pb-4 border-b border-cream-200">
+          <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 rounded-lg dynamic-theme-btn text-white flex items-center justify-center font-bold">
+              <i class="fa-solid fa-cubes text-sm"></i>
+            </div>
+            <span class="font-bold text-slate-800 text-sm">DIGITAS SARPRAS</span>
+          </div>
+          <button onclick="toggleMobileSidebar()" class="p-2 text-slate-400 hover:text-slate-700">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto py-4 space-y-1">
+          <div class="nav-section-main">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1">Menu Utama</p>
+            <button onclick="navigateTo('dashboard'); toggleMobileSidebar();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 hover:bg-cream-100">
+              <i class="fa-solid fa-chart-pie w-5 text-center"></i><span>Dashboard</span>
+            </button>
+            <button onclick="navigateTo('assets'); toggleMobileSidebar();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 hover:bg-cream-100">
+              <i class="fa-solid fa-boxes-stacked w-5 text-center"></i><span>Data Aset</span>
+            </button>
+            <button onclick="navigateTo('maintenance'); toggleMobileSidebar();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 hover:bg-cream-100">
+              <i class="fa-solid fa-screwdriver-wrench w-5 text-center"></i><span>Servis & Maintenance</span>
+            </button>
+            <button onclick="navigateTo('procurements'); toggleMobileSidebar();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 hover:bg-cream-100">
+              <i class="fa-solid fa-cart-shopping w-5 text-center"></i><span>Log Pengadaan & Afkir</span>
+            </button>
+            <button onclick="navigateTo('scan'); toggleMobileSidebar();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 hover:bg-cream-100">
+              <i class="fa-solid fa-qrcode w-5 text-center"></i><span>Pindai QR-Code</span>
+            </button>
+            <div class="my-3 border-t border-cream-100"></div>
+          </div>
+
+          <div class="nav-section-pelayanan">
+            <p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider px-2 mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-hand-holding-heart text-[9px]"></i>
+              <span>Pelayanan</span>
+            </p>
+            <button onclick="navigateTo('respon'); toggleMobileSidebar();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 hover:bg-cream-100">
+              <i class="fa-solid fa-bolt w-5 text-center text-amber-500"></i><span>Tanggap Cepat (Respon)</span>
+            </button>
+            <div class="my-3 border-t border-cream-100"></div>
+          </div>
+
+          <div class="nav-section-infra">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1">Infrastruktur</p>
+            <button onclick="navigateTo('buildings'); toggleMobileSidebar();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 hover:bg-cream-100">
+              <i class="fa-solid fa-school w-5 text-center"></i><span>Bangunan</span>
+            </button>
+            <button onclick="navigateTo('rooms'); toggleMobileSidebar();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 hover:bg-cream-100">
+              <i class="fa-solid fa-door-open w-5 text-center"></i><span>Ruang</span>
+            </button>
+          </div>
+          
+          <div class="role-admin-only">
+            <div class="my-3 border-t border-cream-100"></div>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 mb-1">Administrasi</p>
+            <button onclick="navigateTo('users'); toggleMobileSidebar();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 hover:bg-cream-100">
+              <i class="fa-solid fa-users-gear w-5 text-center"></i><span>Akun Pengguna</span>
+            </button>
+            <button onclick="navigateTo('cetak-qr'); toggleMobileSidebar();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 hover:bg-cream-100">
+              <i class="fa-solid fa-print w-5 text-center"></i><span>Cetak QR-Code</span>
+            </button>
+            <button onclick="navigateTo('settings'); toggleMobileSidebar();" class="w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-700 hover:bg-cream-100">
+              <i class="fa-solid fa-palette w-5 text-center"></i><span>Pengaturan & Tema</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN WORKSPACE VIEWS -->
+      <main id="mainAppWorkspace" class="w-full min-w-0 flex-1 pb-20 lg:pb-6 transition-all">
+
+        <!-- VIEW 1: DASHBOARD -->
+        <div id="view-dashboard" class="app-view space-y-4 sm:space-y-6">
+          <div id="roleNoticeBanner" class="hidden p-3.5 rounded-2xl border flex items-center justify-between text-xs">
+            <div class="flex items-center space-x-2.5">
+              <div id="roleBadgeIcon" class="p-2 rounded-xl bg-white/80 shadow-xs shrink-0">
+                <i class="fa-solid fa-user-shield dynamic-theme-text"></i>
+              </div>
+              <div class="min-w-0">
+                <p id="roleNoticeTitle" class="font-bold text-slate-800 truncate">Mode Akses: Administrator</p>
+                <p id="roleNoticeDesc" class="text-[11px] text-slate-500 line-clamp-1">Memiliki wewenang penuh atas seluruh fitur dan modifikasi data sarpras.</p>
+              </div>
+            </div>
+            <span id="roleNoticePill" class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider dynamic-theme-bg-light dynamic-theme-text shrink-0">Admin</span>
+          </div>
+
+          <div class="relative overflow-hidden rounded-3xl dynamic-gradient-banner text-white p-5 sm:p-8 shadow-soft">
+            <div class="relative z-10 max-w-2xl">
+              <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-[10px] sm:text-xs font-semibold tracking-wide uppercase mb-2 sm:mb-3">
+                Ringkasan Sarana & Prasarana
+              </span>
+              <h2 class="text-xl sm:text-3xl font-extrabold leading-tight">
+                Selamat Datang di DIGITAS SARPRAS
+              </h2>
+              <p class="mt-2 text-rose-100 text-xs sm:text-sm leading-relaxed">
+                Pantau kondisi aset, status servis berkala, ketersediaan ruang, serta rekapitulasi pengadaan barang secara terpadu.
+              </p>
+              <div class="mt-4 sm:mt-5 flex flex-wrap gap-2 sm:gap-2.5">
+                <button onclick="navigateTo('assets'); openAssetModal();" class="role-action-btn px-3.5 py-2 bg-white text-slate-800 hover:bg-cream-100 rounded-xl text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
+                  <i class="fa-solid fa-plus dynamic-theme-text"></i>
+                  <span>Tambah Aset Baru</span>
+                </button>
+                <button onclick="navigateTo('scan')" class="px-3.5 py-2 bg-white/15 hover:bg-white/25 border border-white/30 backdrop-blur-sm rounded-xl text-xs font-semibold transition flex items-center space-x-1.5">
+                  <i class="fa-solid fa-qrcode"></i>
+                  <span>Scan Kode QR</span>
+                </button>
+              </div>
+            </div>
+            <div class="absolute -right-10 -bottom-10 w-48 h-48 sm:w-60 sm:h-60 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+          </div>
+
+          <!-- Statistical Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div class="bg-white rounded-2xl p-3.5 sm:p-5 border border-cream-200/80 shadow-soft flex items-center space-x-3 sm:space-x-4">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl dynamic-theme-bg-light dynamic-theme-text flex items-center justify-center shrink-0 text-lg sm:text-xl border dynamic-theme-border">
+                <i class="fa-solid fa-boxes-stacked"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">Total Aset</p>
+                <h3 id="statTotalAssets" class="text-lg sm:text-2xl font-extrabold text-slate-800 mt-0.5">0</h3>
+                <p class="text-[9px] sm:text-[10px] text-emerald-600 font-medium truncate">Aset terdaftar aktif</p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-3.5 sm:p-5 border border-cream-200/80 shadow-soft flex items-center space-x-3 sm:space-x-4">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 text-lg sm:text-xl border border-emerald-100">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">Kondisi Baik</p>
+                <h3 id="statKondisiBaik" class="text-lg sm:text-2xl font-extrabold text-emerald-600 mt-0.5">0</h3>
+                <p id="statPersenBaik" class="text-[9px] sm:text-[10px] text-slate-500 font-medium truncate">0% dari total</p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-3.5 sm:p-5 border border-cream-200/80 shadow-soft flex items-center space-x-3 sm:space-x-4">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 text-lg sm:text-xl border border-amber-100">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">Rusak Ringan</p>
+                <h3 id="statRusakRingan" class="text-lg sm:text-2xl font-extrabold text-amber-600 mt-0.5">0</h3>
+                <p class="text-[9px] sm:text-[10px] text-amber-600 font-medium truncate">Bisa digunakan</p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-3.5 sm:p-5 border border-cream-200/80 shadow-soft flex items-center space-x-3 sm:space-x-4">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 text-lg sm:text-xl border border-rose-100">
+                <i class="fa-solid fa-circle-xmark"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">Rusak Berat</p>
+                <h3 id="statRusakBerat" class="text-lg sm:text-2xl font-extrabold text-rose-600 mt-0.5">0</h3>
+                <p class="text-[9px] sm:text-[10px] text-rose-600 font-medium truncate">Butuh perbaikan</p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-3.5 sm:p-5 border border-cream-200/80 shadow-soft flex items-center space-x-3 sm:space-x-4">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 text-lg sm:text-xl border border-indigo-100">
+                <i class="fa-solid fa-school"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">Gedung</p>
+                <h3 id="statTotalBuildings" class="text-lg sm:text-2xl font-extrabold text-slate-800 mt-0.5">0</h3>
+                <p class="text-[9px] sm:text-[10px] text-slate-500 font-medium truncate">Unit gedung</p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-3.5 sm:p-5 border border-cream-200/80 shadow-soft flex items-center space-x-3 sm:space-x-4">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 text-lg sm:text-xl border border-purple-100">
+                <i class="fa-solid fa-door-open"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">Total Ruang</p>
+                <h3 id="statTotalRooms" class="text-lg sm:text-2xl font-extrabold text-slate-800 mt-0.5">0</h3>
+                <p class="text-[9px] sm:text-[10px] text-slate-500 font-medium truncate">Kelas, Lab & TU</p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-3.5 sm:p-5 border border-cream-200/80 shadow-soft flex items-center space-x-3 sm:space-x-4">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0 text-lg sm:text-xl border border-cyan-100">
+                <i class="fa-solid fa-cart-flatbed"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">Pengadaan</p>
+                <h3 id="statTotalProcurements" class="text-lg sm:text-2xl font-extrabold text-slate-800 mt-0.5">0</h3>
+                <p class="text-[9px] sm:text-[10px] text-cyan-600 font-medium truncate">Dokumen baru</p>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-3.5 sm:p-5 border border-cream-200/80 shadow-soft flex items-center space-x-3 sm:space-x-4">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center shrink-0 text-lg sm:text-xl border border-orange-100">
+                <i class="fa-solid fa-wrench"></i>
+              </div>
+              <div class="min-w-0 flex-1">
+                <p class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">Perlu Servis</p>
+                <h3 id="statNeedsRepair" class="text-lg sm:text-2xl font-extrabold text-orange-600 mt-0.5">0</h3>
+                <p class="text-[9px] sm:text-[10px] text-orange-600 font-medium truncate">Antrean perbaikan</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Urgensi & Aktivitas -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div class="lg:col-span-2 bg-white rounded-2xl border border-cream-200/80 p-4 sm:p-5 shadow-soft">
+              <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+                <div class="flex items-center space-x-2 sm:space-x-2.5">
+                  <div class="p-2 rounded-lg bg-rose-50 text-rose-600 shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-xs sm:text-sm font-bold text-slate-800">Aset Butuh Penanganan Perbaikan</h4>
+                    <p class="text-[10px] sm:text-[11px] text-slate-500">Kondisi rusak atau dalam antrean servis</p>
+                  </div>
+                </div>
+                <button onclick="navigateTo('maintenance')" class="text-[11px] sm:text-xs font-semibold dynamic-theme-text hover:underline shrink-0">
+                  Lihat <i class="fa-solid fa-chevron-right text-[9px]"></i>
+                </button>
+              </div>
+              <div id="dashboardMaintenanceList" class="divide-y divide-cream-100 mt-2 max-h-80 overflow-y-auto"></div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-cream-200/80 p-4 sm:p-5 shadow-soft">
+              <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+                <div class="flex items-center space-x-2 sm:space-x-2.5">
+                  <div class="p-2 rounded-lg dynamic-theme-bg-light dynamic-theme-text shrink-0">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                  </div>
+                  <div>
+                    <h4 class="text-xs sm:text-sm font-bold text-slate-800">Aktivitas Terkini</h4>
+                    <p class="text-[10px] sm:text-[11px] text-slate-500">Log operasional sarpras</p>
+                  </div>
+                </div>
+              </div>
+              <div id="dashboardActivityList" class="space-y-3 mt-3 max-h-80 overflow-y-auto pr-1"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 2: DATA ASET -->
+        <div id="view-assets" class="app-view hidden space-y-4 sm:space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-cream-200/80 shadow-soft">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-800">Daftar Data Aset Sarpras</h2>
+              <p class="text-[11px] sm:text-xs text-slate-500">Kelola informasi inventaris barang, kode QR, lokasi ruang, dan kondisi fisik aset.</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="exportAssetsCSV()" class="px-3 py-2 rounded-xl bg-cream-100 text-slate-700 hover:bg-cream-200 text-xs font-semibold transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                <span>Export CSV</span>
+              </button>
+              <button onclick="openAssetModal()" class="role-action-btn px-3.5 py-2 rounded-xl dynamic-theme-btn text-white text-xs font-bold transition shadow-md flex items-center space-x-1.5">
+                <i class="fa-solid fa-plus"></i>
+                <span>Tambah Aset</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-cream-200/80 shadow-soft space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
+              <div class="sm:col-span-2 relative">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                  <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </span>
+                <input type="text" id="assetSearchInput" oninput="renderAssetsTable()" placeholder="Cari kode, nama, merk..."
+                  class="w-full pl-9 pr-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-magenta-500">
+              </div>
+              <div>
+                <select id="filterAssetKategori" onchange="renderAssetsTable()" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-magenta-500">
+                  <option value="">Semua Kategori</option>
+                  <option value="Elektronik & IT">Elektronik & IT</option>
+                  <option value="Mebel & Furniture">Mebel & Furniture</option>
+                  <option value="Peralatan Laboratorium">Peralatan Lab</option>
+                  <option value="Peralatan Olahraga">Peralatan Olahraga</option>
+                  <option value="Kendaraan Dinas">Kendaraan Dinas</option>
+                  <option value="Buku & Media">Buku & Media</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
+              </div>
+              <div>
+                <select id="filterAssetKondisi" onchange="renderAssetsTable()" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-magenta-500">
+                  <option value="">Semua Kondisi</option>
+                  <option value="Baik">Baik</option>
+                  <option value="Rusak Ringan">Rusak Ringan</option>
+                  <option value="Rusak Berat">Rusak Berat</option>
+                </select>
+              </div>
+              <div>
+                <select id="filterAssetGedung" onchange="renderAssetsTable()" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-magenta-500">
+                  <option value="">Semua Gedung</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-cream-200/80 shadow-soft overflow-hidden">
+            <div class="hidden md:block overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-cream-100/60 border-b border-cream-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th class="py-3.5 px-4">Kode & Nama Barang</th>
+                    <th class="py-3.5 px-4">Kategori</th>
+                    <th class="py-3.5 px-4">Lokasi (Gedung / Ruang)</th>
+                    <th class="py-3.5 px-4">Jml & Nilai</th>
+                    <th class="py-3.5 px-4 text-center">Kondisi</th>
+                    <th class="py-3.5 px-4 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="assetsTableBody" class="divide-y divide-cream-100 text-xs text-slate-700"></tbody>
+              </table>
+            </div>
+
+            <div id="assetsMobileCardContainer" class="md:hidden divide-y divide-cream-100 p-2.5 space-y-2.5"></div>
+
+            <div id="assetsEmptyState" class="hidden p-10 text-center">
+              <div class="w-12 h-12 bg-cream-100 rounded-2xl flex items-center justify-center mx-auto dynamic-theme-text mb-2.5">
+                <i class="fa-solid fa-box-open text-xl"></i>
+              </div>
+              <h4 class="text-xs sm:text-sm font-bold text-slate-800">Tidak ada aset ditemukan</h4>
+              <p class="text-[11px] text-slate-500 mt-0.5">Coba sesuaikan kata kunci pencarian atau filter Anda.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 3: SERVIS & MAINTENANCE -->
+        <div id="view-maintenance" class="app-view hidden space-y-4 sm:space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-cream-200/80 shadow-soft">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-800">Servis & Maintenance Sarpras</h2>
+              <p class="text-[11px] sm:text-xs text-slate-500">Kelola dan selesaikan checklist perbaikan aset sekolah secara terpantau.</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="openReportMaintenanceModal()" class="role-action-btn px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Laporkan Kerusakan Baru</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex space-x-2 bg-cream-100/70 p-1.5 rounded-2xl max-w-md w-full">
+            <button onclick="setMaintenanceTab('pending')" id="tabMaintPending" class="flex-1 py-2 rounded-xl text-xs font-bold transition bg-white dynamic-theme-text shadow-xs">
+              Perlu Servis (<span id="countMaintPending">0</span>)
+            </button>
+            <button onclick="setMaintenanceTab('completed')" id="tabMaintCompleted" class="flex-1 py-2 rounded-xl text-xs font-bold transition text-slate-600 hover:text-slate-900">
+              Selesai (<span id="countMaintCompleted">0</span>)
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4" id="maintenanceCardsContainer"></div>
+
+          <div id="maintenanceEmptyState" class="hidden bg-white rounded-2xl border border-cream-200/80 p-10 text-center shadow-soft">
+            <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-2.5">
+              <i class="fa-solid fa-circle-check text-xl"></i>
+            </div>
+            <h4 class="text-xs sm:text-sm font-bold text-slate-800">Semua Aset dalam Kondisi Terawat</h4>
+            <p class="text-[11px] text-slate-500 mt-0.5">Tidak ada catatan perbaikan yang belum diselesaikan pada tab ini.</p>
+          </div>
+        </div>
+
+        <!-- VIEW 4: PENGADAAN & AFKIR -->
+        <div id="view-procurements" class="app-view hidden space-y-4 sm:space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-cream-200/80 shadow-soft">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-800">Log Pengadaan & Pemusnahan (Afkir)</h2>
+              <p class="text-[11px] sm:text-xs text-slate-500">Rekapitulasi berkas pengadaan baru dan pencatatan berita acara pemusnahan aset.</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="openProcurementModal()" class="role-action-btn px-3 py-2 rounded-xl dynamic-theme-btn text-white text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
+                <i class="fa-solid fa-cart-plus"></i>
+                <span>Pengadaan Baru</span>
+              </button>
+              <button onclick="openDisposalModal()" class="role-action-btn px-3 py-2 rounded-xl bg-rose-700 hover:bg-rose-800 text-white text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
+                <i class="fa-solid fa-fire-burner"></i>
+                <span>Pemusnahan</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex border-b border-cream-200 gap-4 sm:gap-6">
+            <button onclick="switchProcureTab('procure')" id="subtabProcure" class="pb-2.5 text-xs font-bold dynamic-theme-text border-b-2 dynamic-theme-border flex items-center space-x-1.5">
+              <i class="fa-solid fa-receipt"></i>
+              <span>Daftar Pengadaan Barang</span>
+            </button>
+            <button onclick="switchProcureTab('disposal')" id="subtabDisposal" class="pb-2.5 text-xs font-medium text-slate-500 hover:text-slate-800 flex items-center space-x-1.5">
+              <i class="fa-solid fa-trash-can"></i>
+              <span>Berita Acara Pemusnahan</span>
+            </button>
+          </div>
+
+          <div id="tabContentProcure" class="bg-white rounded-2xl border border-cream-200/80 shadow-soft overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-cream-100/60 border-b border-cream-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th class="py-3.5 px-4">No & Tanggal</th>
+                    <th class="py-3.5 px-4">Nama Barang & Spek</th>
+                    <th class="py-3.5 px-4">Jumlah & Satuan</th>
+                    <th class="py-3.5 px-4">Harga & Total</th>
+                    <th class="py-3.5 px-4">Penyedia / Dana</th>
+                    <th class="py-3.5 px-4 text-center">Status Aset</th>
+                    <th class="py-3.5 px-4 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="procurementsTableBody" class="divide-y divide-cream-100 text-xs text-slate-700"></tbody>
+              </table>
+            </div>
+            <div id="procureEmptyState" class="hidden p-10 text-center text-slate-500 text-xs">Belum ada data pengadaan barang.</div>
+          </div>
+
+          <div id="tabContentDisposal" class="hidden bg-white rounded-2xl border border-cream-200/80 shadow-soft overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-cream-100/60 border-b border-cream-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th class="py-3.5 px-4">No. Berita Acara</th>
+                    <th class="py-3.5 px-4">Tgl Pemusnahan</th>
+                    <th class="py-3.5 px-4">Aset Dimusnahkan</th>
+                    <th class="py-3.5 px-4">Alasan & Metode</th>
+                    <th class="py-3.5 px-4">Petugas</th>
+                    <th class="py-3.5 px-4 text-right">Cetak Dokumen</th>
+                  </tr>
+                </thead>
+                <tbody id="disposalsTableBody" class="divide-y divide-cream-100 text-xs text-slate-700"></tbody>
+              </table>
+            </div>
+            <div id="disposalEmptyState" class="hidden p-10 text-center text-slate-500 text-xs">Belum ada data pemusnahan aset.</div>
+          </div>
+        </div>
+
+        <!-- VIEW 5: PINDAI QR-CODE -->
+        <div id="view-scan" class="app-view hidden space-y-4 sm:space-y-5">
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-cream-200/80 shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-xl dynamic-theme-bg-light dynamic-theme-text flex items-center justify-center text-sm font-bold border dynamic-theme-border">
+                  <i class="fa-solid fa-qrcode"></i>
+                </div>
+                <h2 class="text-base sm:text-lg font-bold text-slate-800">Pindai QR-Code Aset / Lokasi</h2>
+              </div>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Gunakan kamera HP langsung, pilih foto label dari galeri, atau cari manual dengan kode entitas.</p>
+            </div>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Scanner Kamera HP Siap</span>
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+            <div class="lg:col-span-5 bg-white rounded-2xl border border-cream-200/80 p-4 sm:p-5 shadow-soft flex flex-col justify-between space-y-4">
+              
+              <div id="qr-reader" class="hidden"></div>
+              <input type="file" id="qrCameraInput" accept="image/*" capture="environment" class="hidden" onchange="scanFromImageFile(this)">
+              <input type="file" id="qrFileInput" accept="image/*" class="hidden" onchange="scanFromImageFile(this)">
+
+              <div class="w-full space-y-2">
+                <div class="flex items-center justify-between">
+                  <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-camera dynamic-theme-text text-sm"></i>
+                    <span>Kamera HP (Jepret & Pindai Langsung)</span>
+                  </label>
+                  <span class="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Anti-Blokir</span>
+                </div>
+
+                <button type="button" 
+                        onclick="document.getElementById('qrCameraInput').click()" 
+                        class="w-full py-3.5 px-4 rounded-2xl dynamic-theme-btn text-white shadow-md hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm font-bold">
+                  <i class="fa-solid fa-camera text-base"></i>
+                  <span>Buka Kamera HP & Pindai</span>
+                </button>
+                <p class="text-[10px] text-slate-400 text-center">Membuka langsung aplikasi kamera bawaan smartphone dengan fokus otomatis yang tajam</p>
+              </div>
+
+              <div class="w-full pt-3 border-t border-cream-200 space-y-2">
+                <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <i class="fa-solid fa-image text-slate-400 text-sm"></i>
+                  <span>Pindai dari Foto / Gambar Galeri</span>
+                </label>
+                
+                <button type="button" 
+                        onclick="document.getElementById('qrFileInput').click()"
+                        class="w-full py-2.5 px-4 bg-cream-50/80 hover:bg-cream-100 border border-cream-200 rounded-xl text-slate-700 text-xs font-bold transition flex items-center justify-center space-x-2 active:scale-95 shadow-xs">
+                  <i class="fa-solid fa-folder-open text-slate-500"></i>
+                  <span>Pilih Foto dari Galeri</span>
+                </button>
+              </div>
+
+              <div class="w-full pt-3 border-t border-cream-200 space-y-2">
+                <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <i class="fa-solid fa-keyboard text-slate-400"></i>
+                  <span>Input Kode Manual (Alternatif):</span>
+                </label>
+                <div class="flex space-x-2">
+                  <input type="text" 
+                         id="manualCodeInput" 
+                         placeholder="Contoh: AST-2024-001 / GDG-A / R-101"
+                         class="flex-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-800 uppercase font-medium focus:outline-none focus:ring-2 focus:ring-magenta-500">
+                  <button type="button" 
+                          onclick="lookupCode(document.getElementById('manualCodeInput').value)" 
+                          class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs active:scale-95">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <span>Cari</span>
+                  </button>
+                </div>
+                <p class="text-[10px] text-slate-400">Ketikkan kode barang, ID ruangan, atau kode gedung jika label fisik aus.</p>
+              </div>
+
+              <div class="w-full p-3 rounded-xl bg-cream-100/60 border border-cream-200/80 text-[10.5px] text-slate-600 flex items-start gap-2">
+                <i class="fa-solid fa-volume-high dynamic-theme-text mt-0.5 text-xs"></i>
+                <p class="leading-relaxed">Sistem akan otomatis membunyikan nada <strong>beep</strong> dan getaran haptik saat kode QR berhasil diidentifikasi.</p>
+              </div>
+            </div>
+
+            <div class="lg:col-span-7 bg-white rounded-2xl border border-cream-200/80 p-4 sm:p-5 shadow-soft">
+              <div class="flex items-center space-x-2 pb-3 border-b border-cream-100">
+                <i class="fa-solid fa-id-card-clip dynamic-theme-text"></i>
+                <h4 class="text-xs sm:text-sm font-bold text-slate-800">Hasil Identifikasi</h4>
+              </div>
+
+              <div id="scanResultPlaceholder" class="p-8 text-center text-slate-400 text-xs">
+                <i class="fa-solid fa-qrcode text-4xl mb-3 text-cream-400"></i>
+                <p class="font-medium text-slate-600">Belum ada kode yang dipindai.</p>
+                <p class="text-[11px] mt-1 text-slate-400">Gunakan tombol <strong>Buka Kamera HP & Pindai</strong> di samping atau masukkan kode secara manual untuk menampilkan detail informasi.</p>
+              </div>
+
+              <div id="scanResultContent" class="hidden space-y-4 pt-3"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 5B: TANGGAP CEPAT (RESPON) -->
+        <div id="view-respon" class="app-view hidden space-y-4 sm:space-y-5">
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-cream-200/80 shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+                <h2 class="text-base sm:text-lg font-bold text-slate-800">Tanggap Cepat (Respon Lapangan)</h2>
+              </div>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Pindai QR dengan kamera live HP, pilih foto dari galeri, atau cari manual untuk lapor kerusakan cepat.</p>
+            </div>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200 self-start sm:self-auto">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+              <span>Scanner Kamera HP Siap</span>
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+            <div class="lg:col-span-5 bg-white rounded-2xl border border-cream-200/80 p-4 sm:p-5 shadow-soft flex flex-col justify-between space-y-3.5">
+              
+              <div class="relative w-full aspect-square sm:aspect-4/3 max-h-[320px] bg-[#0c0f1d] rounded-2xl border-2 border-dashed border-slate-700/80 flex flex-col items-center justify-center p-3 overflow-hidden shadow-inner">
+                <div id="qr-reader-respon" class="w-full h-full rounded-xl overflow-hidden hidden"></div>
+
+                <div id="qrStandbyPlaceholderRespon" class="flex flex-col items-center justify-center text-center p-4">
+                  <div class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-xs flex items-center justify-center text-slate-300 text-lg mb-2.5 shadow-inner border border-white/10">
+                    <i class="fa-solid fa-camera"></i>
+                  </div>
+                  <h4 class="text-xs sm:text-sm font-bold text-slate-200 leading-snug">Kamera respon saat ini belum aktif</h4>
+                  <p class="text-[10px] sm:text-[11px] text-slate-400 mt-1 max-w-[230px] leading-relaxed">Klik "Nyalakan Kamera" untuk mulai memindai secara live.</p>
+                </div>
+              </div>
+
+              <button type="button" 
+                      id="btnToggleCameraRespon" 
+                      onclick="toggleCameraScannerRespon()" 
+                      class="w-full py-3 px-4 rounded-2xl dynamic-theme-btn text-white font-bold text-xs sm:text-sm shadow-md hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-video text-sm sm:text-base"></i>
+                <span id="btnToggleCameraResponText">Nyalakan Kamera</span>
+              </button>
+
+              <input type="file" id="qrFileInputRespon" accept="image/*" class="hidden" onchange="scanFromImageFile(this)">
+              <button type="button" 
+                      onclick="document.getElementById('qrFileInputRespon').click()"
+                      class="w-full py-2.5 px-4 bg-cream-50/90 hover:bg-cream-100 border border-cream-200 rounded-xl text-slate-700 text-xs font-bold transition flex items-center justify-center gap-2 active:scale-95 shadow-xs">
+                <i class="fa-solid fa-image text-slate-500"></i>
+                <span>Pindai dari Foto / Gambar Galeri</span>
+              </button>
+
+              <div class="w-full pt-3 border-t border-cream-200 space-y-2">
+                <label class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <i class="fa-solid fa-keyboard text-slate-400"></i>
+                  <span>Input Kode Manual (Alternatif):</span>
+                </label>
+                <div class="flex space-x-2">
+                  <input type="text" 
+                         id="manualCodeInputRespon" 
+                         placeholder="CONTOH: AST-2024-001 / GDG-A / R-101"
+                         class="flex-1 px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-800 uppercase font-medium focus:outline-none focus:ring-2 focus:ring-amber-500">
+                  <button type="button" 
+                          onclick="lookupCode(document.getElementById('manualCodeInputRespon').value, 'scanResultContentRespon', 'scanResultPlaceholderRespon')" 
+                          class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-xs active:scale-95">
+                    <span>Cari</span>
+                  </button>
+                </div>
+                <p class="text-[10px] text-slate-400">Ketikkan kode barang, ID ruangan, atau kode gedung jika label fisik aus.</p>
+              </div>
+            </div>
+
+            <div class="lg:col-span-7 bg-white rounded-2xl border border-cream-200/80 p-4 sm:p-5 shadow-soft">
+              <div class="flex items-center space-x-2 pb-3 border-b border-cream-100">
+                <i class="fa-solid fa-bolt text-amber-500"></i>
+                <h4 class="text-xs sm:text-sm font-bold text-slate-800">Hasil Identifikasi Tanggap Cepat</h4>
+              </div>
+
+              <div id="scanResultPlaceholderRespon" class="p-8 text-center text-slate-400 text-xs">
+                <i class="fa-solid fa-qrcode text-4xl mb-3 text-cream-400"></i>
+                <p class="font-medium text-slate-600">Belum ada kode yang dipindai.</p>
+                <p class="text-[11px] mt-1 text-slate-400">Gunakan tombol <strong>Nyalakan Kamera</strong> atau <strong>Pilih dari Galeri</strong> di samping untuk mulai lapor kerusakan.</p>
+              </div>
+
+              <div id="scanResultContentRespon" class="hidden space-y-4 pt-3"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 6: CETAK QR-CODE MASSAL -->
+        <div id="view-cetak-qr" class="app-view hidden space-y-4 sm:space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-cream-200/80 shadow-soft no-print">
+            <div>
+              <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-xl dynamic-theme-bg-light dynamic-theme-text flex items-center justify-center text-sm font-bold border dynamic-theme-border">
+                  <i class="fa-solid fa-print"></i>
+                </div>
+                <h2 class="text-base sm:text-lg font-bold text-slate-800">Cetak QR-Code Massal</h2>
+              </div>
+              <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Cetak stiker barcode QR secara massal untuk Aset Sarpras, Data Ruangan, maupun Bangunan dengan format presisi.</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="resetFilterCetakQR()" class="px-3 py-2 rounded-xl bg-cream-100 hover:bg-cream-200 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-left text-slate-500"></i>
+                <span>Reset</span>
+              </button>
+              <button onclick="window.print()" class="px-3.5 py-2 rounded-xl dynamic-theme-btn text-white text-xs font-bold transition shadow-md flex items-center gap-1.5">
+                <i class="fa-solid fa-print"></i>
+                <span>Cetak Lembar</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-cream-200/80 shadow-soft space-y-3.5 no-print">
+            <div class="flex items-center justify-between pb-2.5 border-b border-cream-100">
+              <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-filter dynamic-theme-text"></i>
+                <span>Filter Target & Pengaturan Kertas</span>
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3 text-xs">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Tipe Entitas *</label>
+                <select id="filterCetakTipe" onchange="handleCetakTipeChange()" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-magenta-500 font-medium">
+                  <option value="aset">Aset Sarpras</option>
+                  <option value="ruang">Data Ruangan</option>
+                  <option value="gedung">Data Bangunan / Gedung</option>
+                </select>
+              </div>
+
+              <div id="wrapFilterCetakKategori">
+                <label class="block font-semibold text-slate-700 mb-1">Kategori Aset</label>
+                <select id="filterCetakKategori" onchange="muatDataCetakQR()" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-magenta-500">
+                  <option value="">-- Semua Kategori --</option>
+                </select>
+              </div>
+
+              <div id="wrapFilterCetakGedung">
+                <label class="block font-semibold text-slate-700 mb-1">Gedung / Bangunan</label>
+                <select id="filterCetakGedung" onchange="handleCetakGedungChange()" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-magenta-500">
+                  <option value="">-- Semua Gedung --</option>
+                </select>
+              </div>
+
+              <div id="wrapFilterCetakRuang">
+                <label class="block font-semibold text-slate-700 mb-1">Ruangan</label>
+                <select id="filterCetakRuang" onchange="muatDataCetakQR()" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-magenta-500">
+                  <option value="">-- Semua Ruang --</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Ukuran Kertas Lembar</label>
+                <select id="filterCetakKertas" onchange="handleCetakPaperChange(this.value)" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-magenta-500 font-bold text-slate-800">
+                  <option value="a4">Kertas A4 (210 x 297 mm)</option>
+                  <option value="folio">Kertas Folio / F4 (215 x 330 mm)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="pt-2.5 border-t border-cream-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+              <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-cream-100 text-slate-700">
+                  <span id="labelCetakCount">0</span>&nbsp;Label Siap Dicetak
+                </span>
+                <span class="text-[10px] text-slate-400 hidden sm:inline">• Layout Stiker Grid 3 Kolom</span>
+              </div>
+              <button onclick="muatDataCetakQR()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>Terapkan Filter</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-slate-200/70 p-3 sm:p-8 rounded-2xl sm:rounded-3xl overflow-x-auto flex justify-center border border-slate-300/80 shadow-inner">
+            <div id="printableBatchArea" class="bg-white p-4 sm:p-6 rounded-2xl shadow-xl w-full max-w-[210mm] min-h-[297mm] text-slate-900 box-border transition-all">
+              <div id="printSheetItemsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                <div class="col-span-full py-16 text-center text-slate-400 text-xs">
+                  <i class="fa-solid fa-spinner fa-spin text-2xl dynamic-theme-text mb-2"></i>
+                  <p>Memuat data stiker QR-Code...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 7: BANGUNAN -->
+        <div id="view-buildings" class="app-view hidden space-y-4 sm:space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-cream-200/80 shadow-soft">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-800">Data Bangunan & Gedung Sekolah</h2>
+              <p class="text-[11px] sm:text-xs text-slate-500">Kelola master gedung, fungsi bangunan, luas, dan rekapitulasi ruang terhubung.</p>
+            </div>
+            <button onclick="openBuildingModal()" class="role-action-btn px-3.5 py-2 rounded-xl dynamic-theme-btn text-white text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
+              <i class="fa-solid fa-plus"></i>
+              <span>Tambah Gedung</span>
+            </button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4" id="buildingsContainer"></div>
+        </div>
+
+        <!-- VIEW 8: RUANG -->
+        <div id="view-rooms" class="app-view hidden space-y-4 sm:space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-cream-200/80 shadow-soft">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-800">Data Ruang Sekolah</h2>
+              <p class="text-[11px] sm:text-xs text-slate-500">Kelola ruang kelas, laboratorium, perpustakaan, kantor, dan daftar aset di dalamnya.</p>
+            </div>
+            <button onclick="openRoomModal()" class="role-action-btn px-3.5 py-2 rounded-xl dynamic-theme-btn text-white text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
+              <i class="fa-solid fa-plus"></i>
+              <span>Tambah Ruang</span>
+            </button>
+          </div>
+
+          <div class="flex flex-wrap gap-2 items-center bg-white p-3 rounded-2xl border border-cream-200/80">
+            <span class="text-xs font-semibold text-slate-600 ml-1">Filter Gedung:</span>
+            <div id="roomGedungFilterPills" class="flex flex-wrap gap-1.5"></div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4" id="roomsContainer"></div>
+        </div>
+
+        <!-- VIEW 9: USER MANAGEMENT -->
+        <div id="view-users" class="app-view hidden space-y-4 sm:space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-cream-200/80 shadow-soft">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-slate-800">Manajemen Akun Pengguna</h2>
+              <p class="text-[11px] sm:text-xs text-slate-500">Kelola hak akses administrator, kepala sekolah, dan staf sarpras untuk login aplikasi.</p>
+            </div>
+            <button onclick="openUserModal()" class="px-3.5 py-2 rounded-xl dynamic-theme-btn text-white text-xs font-bold transition shadow-sm flex items-center space-x-1.5">
+              <i class="fa-solid fa-user-plus"></i>
+              <span>Tambah Akun</span>
+            </button>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-cream-200/80 shadow-soft overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="bg-cream-100/60 border-b border-cream-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th class="py-3.5 px-4">Pengguna</th>
+                    <th class="py-3.5 px-4">Username</th>
+                    <th class="py-3.5 px-4">Role Akses</th>
+                    <th class="py-3.5 px-4">Status Akun</th>
+                    <th class="py-3.5 px-4 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody" class="divide-y divide-cream-100 text-xs text-slate-700"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 10: PENGATURAN & TEMA -->
+        <div id="view-settings" class="app-view hidden space-y-4 sm:space-y-5">
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-cream-200/80 shadow-soft">
+            <h2 class="text-base sm:text-lg font-bold text-slate-800">Pengaturan & Identitas Sekolah</h2>
+            <p class="text-[11px] sm:text-xs text-slate-500">Sesuaikan nama instansi, logo, koneksi API backend, tema warna, dan font sistem.</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div class="bg-white p-4 sm:p-6 rounded-2xl border border-cream-200/80 shadow-soft space-y-3.5">
+              <h3 class="text-xs sm:text-sm font-bold text-slate-800 border-b border-cream-100 pb-2 flex items-center gap-2">
+                <i class="fa-solid fa-school-flag dynamic-theme-text"></i>
+                <span>Identitas Sekolah & Aplikasi</span>
+              </h3>
+              
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Aplikasi</label>
+                <input type="text" id="setAppName" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-magenta-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Sekolah / Instansi</label>
+                <input type="text" id="setSchoolName" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-magenta-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Alamat Sekolah</label>
+                <textarea id="setSchoolAddress" rows="2" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-magenta-500"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Kepala Sekolah / Penanggung Jawab</label>
+                <input type="text" id="setPrincipalName" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-magenta-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">NIP Kepala Sekolah</label>
+                <input type="text" id="setPrincipalNIP" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-magenta-500">
+              </div>
+
+              <!-- Endpoint URL Web App GAS Khusus Deployment GitHub Pages -->
+              <div class="pt-2 border-t border-cream-100">
+                <label class="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
+                  <span class="flex items-center gap-1.5">
+                    <i class="fa-solid fa-link dynamic-theme-text"></i>
+                    <span>URL Web App Google Apps Script (Backend)</span>
+                  </span>
+                  <span class="text-[9px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">GitHub Sync</span>
+                </label>
+                <input type="url" id="setGasApiUrl" placeholder="https://script.google.com/macros/s/.../exec"
+                  class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-800 font-mono focus:outline-none focus:ring-2 focus:ring-magenta-500">
+                <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                  Masukkan URL Web App hasil deploy Apps Script (pilihan: <em>Execute as: Me</em> & <em>Access: Anyone</em>) agar GitHub Pages dapat membaca & menyimpan data ke Google Sheets.
+                </p>
+              </div>
+
+              <button onclick="saveAppSettings()" class="w-full py-2.5 dynamic-theme-btn text-white rounded-xl text-xs font-bold transition shadow-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Simpan Pengaturan</span>
+              </button>
+            </div>
+
+            <div class="space-y-4 sm:space-y-6">
+              <div class="bg-white p-4 sm:p-6 rounded-2xl border border-cream-200/80 shadow-soft space-y-3">
+                <div class="flex items-center justify-between border-b border-cream-100 pb-2">
+                  <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-palette dynamic-theme-text"></i>
+                    <span>Kombinasi Warna & Nuansa Lembut</span>
+                  </h3>
+                  <span class="text-[10px] text-slate-400">Pilih tema</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1" id="themePresetGrid"></div>
+              </div>
+
+              <div class="bg-white p-4 sm:p-6 rounded-2xl border border-cream-200/80 shadow-soft space-y-3">
+                <div class="flex items-center justify-between border-b border-cream-100 pb-2">
+                  <h3 class="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-font dynamic-theme-text"></i>
+                    <span>Pengaturan Font Antarmuka</span>
+                  </h3>
+                  <span class="text-[10px] text-slate-400">Google Fonts</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1" id="fontPresetGrid"></div>
+              </div>
+
+              <div class="bg-gradient-to-r from-cream-100 via-white to-cream-100 p-4 rounded-2xl border dynamic-theme-border shadow-soft space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <i class="fa-solid fa-cloud-arrow-up dynamic-theme-text"></i>
+                    <span>Database Sinkronisasi Tema & Font</span>
+                  </span>
+                  <span class="text-[10px] text-slate-500">Sheet: Settings</span>
+                </div>
+                <p class="text-[11px] text-slate-600">Simpan pilihan warna dan font ke Google Sheets agar semua perangkat otomatis memakai tema yang sama.</p>
+                <button type="button" onclick="saveThemeAndFontSettings()" id="btnSaveThemeAndFont" class="w-full py-2.5 dynamic-theme-btn text-white rounded-xl text-xs font-bold transition shadow-md hover:opacity-95 flex items-center justify-center gap-2">
+                  <i class="fa-solid fa-floppy-disk"></i>
+                  <span id="btnSaveThemeText">Simpan Perubahan Tema & Font</span>
+                </button>
+              </div>
+
+              <div class="bg-white p-4 sm:p-6 rounded-2xl border border-cream-200/80 shadow-soft space-y-3">
+                <h3 class="text-xs sm:text-sm font-bold text-slate-800 border-b border-cream-100 pb-2 flex items-center gap-2">
+                  <i class="fa-solid fa-arrows-rotate text-rose-600"></i>
+                  <span>Pemeliharaan Data</span>
+                </h3>
+                <p class="text-xs text-slate-500">Reset data ke status awal contoh sarpras sekolah untuk pengujian aplikasi.</p>
+                <div class="flex gap-2">
+                  <button onclick="confirmResetData()" class="px-3.5 py-2 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-xl text-xs font-bold transition">
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Reset Data Contoh
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav id="mainAppBottomNav" class="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-cream-200/90 z-30 px-2 py-1.5 flex justify-around items-center shadow-lg no-print">
+      <button onclick="navigateTo('dashboard')" data-mob-nav="dashboard" class="flex flex-col items-center justify-center p-1.5 rounded-xl text-slate-500 text-[10px] font-medium">
+        <i class="fa-solid fa-chart-pie text-base mb-0.5"></i>
+        <span>Home</span>
+      </button>
+      <button onclick="navigateTo('assets')" data-mob-nav="assets" class="flex flex-col items-center justify-center p-1.5 rounded-xl text-slate-500 text-[10px] font-medium">
+        <i class="fa-solid fa-boxes-stacked text-base mb-0.5"></i>
+        <span>Aset</span>
+      </button>
+      <button onclick="navigateTo('respon')" class="flex flex-col items-center justify-center -mt-5 dynamic-gradient-banner text-white w-12 h-12 rounded-full shadow-glow" title="Tanggap Cepat">
+        <i class="fa-solid fa-bolt text-lg text-amber-300"></i>
+      </button>
+      <button onclick="navigateTo('maintenance')" data-mob-nav="maintenance" class="flex flex-col items-center justify-center p-1.5 rounded-xl text-slate-500 text-[10px] font-medium">
+        <i class="fa-solid fa-screwdriver-wrench text-base mb-0.5"></i>
+        <span>Servis</span>
+      </button>
+      <button onclick="toggleMobileSidebar()" class="flex flex-col items-center justify-center p-1.5 rounded-xl text-slate-500 text-[10px] font-medium">
+        <i class="fa-solid fa-bars text-base mb-0.5"></i>
+        <span>Menu</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ==================== DAFTAR MODAL DIALOG SISTEM ==================== -->
+
+  <!-- MODAL: ASSET (TAMBAH & EDIT) -->
+  <div id="modalAsset" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl border border-cream-200 relative my-8 animate-fadeIn">
+      <div class="flex items-center justify-between pb-4 border-b border-cream-100">
+        <h3 id="modalAssetTitle" class="text-base font-bold text-slate-800">Tambah Data Aset</h3>
+        <button onclick="closeModal('modalAsset')" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formAsset" onsubmit="event.preventDefault(); saveAsset();" class="space-y-4 mt-4 text-xs">
+        <input type="hidden" id="assetFormId">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Kode Barang *</label>
+            <input type="text" id="assetFormKode" required placeholder="AST-2024-001"
+              class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl uppercase focus:ring-2 focus:ring-magenta-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nama Barang / Aset *</label>
+            <input type="text" id="assetFormNama" required placeholder="Contoh: Laptop Asus ExpertBook"
+              class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Kategori Barang *</label>
+            <select id="assetFormKategori" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500">
+              <option value="Elektronik & IT">Elektronik & IT</option>
+              <option value="Mebel & Furniture">Mebel & Furniture</option>
+              <option value="Peralatan Laboratorium">Peralatan Laboratorium</option>
+              <option value="Peralatan Olahraga">Peralatan Olahraga</option>
+              <option value="Kendaraan Dinas">Kendaraan Dinas</option>
+              <option value="Buku & Media">Buku & Media</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Merk / Spesifikasi</label>
+            <input type="text" id="assetFormSpesifikasi" placeholder="Core i5, RAM 16GB, SSD 512GB"
+              class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Tahun Perolehan</label>
+            <input type="number" id="assetFormTahun" value="2024" min="1990" max="2099"
+              class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Sumber Dana</label>
+            <select id="assetFormSumberDana" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500">
+              <option value="BOS Reguler">BOS Reguler</option>
+              <option value="BOS Kinerja">BOS Kinerja</option>
+              <option value="DAK Fisik">DAK Fisik</option>
+              <option value="Komite / Hibah">Komite / Hibah</option>
+              <option value="APBD / Yayasan">APBD / Yayasan</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Harga Perolehan (Rp)</label>
+            <input type="number" id="assetFormHarga" value="0" min="0"
+              class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Jumlah Unit *</label>
+            <input type="number" id="assetFormJumlah" required value="1" min="1"
+              class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Satuan</label>
+            <input type="text" id="assetFormSatuan" value="Unit" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Kondisi Aset *</label>
+            <select id="assetFormKondisi" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500">
+              <option value="Baik">Baik</option>
+              <option value="Rusak Ringan">Rusak Ringan</option>
+              <option value="Rusak Berat">Rusak Berat</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Lokasi Gedung *</label>
+            <select id="assetFormGedung" required onchange="populateRoomDropdownForAsset(this.value)" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500"></select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Lokasi Ruang *</label>
+            <select id="assetFormRuang" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500"></select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Penanggung Jawab (PJ)</label>
+            <input type="text" id="assetFormPJ" placeholder="Nama Guru / Staf Pengelola"
+              class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Keterangan Tambahan</label>
+            <input type="text" id="assetFormKet" placeholder="Nomor seri / garansi / catatan khusus"
+              class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500">
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-4 border-t border-cream-100">
+          <button type="button" onclick="closeModal('modalAsset')" class="px-4 py-2 bg-cream-100 text-slate-700 hover:bg-cream-200 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 dynamic-theme-btn text-white rounded-xl font-bold shadow-md">Simpan Aset</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: LAPOR KERUSAKAN -->
+  <div id="modalReportMaint" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-cream-200 relative animate-fadeIn my-6">
+      <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold text-sm">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+          <h3 id="modalReportMaintTitle" class="text-base font-bold text-slate-800">Laporkan Kerusakan</h3>
+        </div>
+        <button onclick="closeModal('modalReportMaint')" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formReportMaint" onsubmit="event.preventDefault(); submitMaintenanceReport();" class="space-y-3.5 mt-4 text-xs">
+        <div>
+          <label id="labelReportTarget" class="block font-semibold text-slate-700 mb-1">Target yang Rusak (Aset / Ruang / Gedung) *</label>
+          <select id="maintFormAssetId" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500 font-medium"></select>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Tanggal Pelaporan *</label>
+            <input type="date" id="maintFormTanggal" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500 font-medium">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Kondisi Kerusakan *</label>
+            <select id="maintFormKondisiBaru" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500 font-semibold text-rose-700">
+              <option value="Rusak Berat">Rusak Berat (Tidak Berfungsi / Butuh Renovasi)</option>
+              <option value="Rusak Ringan">Rusak Ringan (Perlu Diservis / Ditambal)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Detail Kerusakan / Gejala *</label>
+          <textarea id="maintFormKerusakan" rows="3" required placeholder="Jelaskan detail kendala (misal: genteng bocor, lampu mati, layar rusak, kunci pintu rusak)..."
+            class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-camera text-rose-600"></i>
+              <span>Unggah Foto Bukti Kerusakan (Opsional)</span>
+            </span>
+            <span class="text-[10px] text-slate-400 font-normal">Kamera HP / Galeri</span>
+          </label>
+          
+          <input type="file" id="maintFormImageFile" accept="image/*" capture="environment" class="hidden" onchange="handleReportImagePreview(this)">
+          
+          <div id="maintImageUploadBox" onclick="document.getElementById('maintFormImageFile').click()" 
+               class="border-2 border-dashed border-cream-300 hover:border-rose-500 rounded-2xl p-4 text-center cursor-pointer bg-cream-50/70 hover:bg-white transition flex flex-col items-center justify-center gap-1.5 group">
+            <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-base group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <p class="font-bold text-slate-800 text-xs">Ambil Foto Langsung atau Pilih dari Galeri</p>
+            <p class="text-[10px] text-slate-400">Format: JPG, PNG, WEBP (Otomatis dikompres & disimpan ke Drive)</p>
+          </div>
+
+          <div id="maintImagePreviewWrapper" class="hidden mt-2.5 relative rounded-2xl overflow-hidden border border-cream-200 bg-slate-950 flex items-center justify-center max-h-52 p-1 shadow-inner">
+            <img id="maintImagePreviewImg" src="" alt="Bukti Foto Kerusakan" class="max-h-48 w-full object-contain rounded-xl">
+            <button type="button" onclick="clearReportImagePreview()" title="Hapus dan ganti foto" 
+                    class="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-xs shadow-lg transition active:scale-90">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <input type="hidden" id="maintFormImageBase64" value="">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nama Pelapor / Kontak</label>
+          <input type="text" id="maintFormPelapor" placeholder="Contoh: Pak Budi (Guru IPA) / Siswa Lab / Tamu" 
+            class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-magenta-500">
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-3 border-t border-cream-100">
+          <button type="button" onclick="closeModal('modalReportMaint')" class="px-4 py-2 bg-cream-100 text-slate-700 rounded-xl font-semibold hover:bg-cream-200">Batal</button>
+          <button type="submit" id="btnSubmitMaintReport" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+            <span id="btnSubmitMaintText">Kirim Laporan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SELESAIKAN PERBAIKAN -->
+  <div id="modalResolveMaint" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-cream-200 relative animate-fadeIn my-6">
+      <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+        <div class="flex items-center space-x-2">
+          <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+          </div>
+          <h3 class="text-base font-bold text-slate-800">Selesaikan Perbaikan</h3>
+        </div>
+        <button onclick="closeModal('modalResolveMaint')" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formResolveMaint" onsubmit="event.preventDefault(); submitResolveMaintenance();" class="space-y-3.5 mt-4 text-xs">
+        <input type="hidden" id="resolveMaintId">
+        <input type="hidden" id="resolveAssetId">
+        <div class="p-3 bg-cream-50 rounded-2xl border border-cream-200/80">
+          <p class="text-slate-400 text-[10px] font-semibold uppercase">Objek / Entitas yang Diperbaiki:</p>
+          <p id="resolveBarangName" class="font-bold text-slate-800 text-sm mt-0.5">-</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Tanggal Selesai Perbaikan *</label>
+            <input type="date" id="resolveTanggalSelesai" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-emerald-500 font-medium">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Kondisi Setelah Perbaikan *</label>
+            <select id="resolveKondisiSetelah" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-emerald-500 font-semibold text-emerald-700">
+              <option value="Baik">Baik (Normal / Sempurna)</option>
+              <option value="Rusak Ringan">Rusak Ringan (Dapat Digunakan Bersyarat)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Catatan Hasil Perbaikan *</label>
+          <textarea id="resolveCatatan" rows="3" required placeholder="Contoh: Komponen rusak telah diganti, kabel dirapikan, dan lulus uji coba fungsi..."
+            class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl focus:ring-2 focus:ring-emerald-500"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-camera text-emerald-600"></i>
+              <span>Unggah Foto Bukti Hasil Perbaikan (Opsional)</span>
+            </span>
+            <span class="text-[10px] text-slate-400 font-normal">Kamera HP / Galeri</span>
+          </label>
+          
+          <input type="file" id="resolveFormImageFile" accept="image/*" capture="environment" class="hidden" onchange="handleResolveImagePreview(this)">
+          
+          <div id="resolveImageUploadBox" onclick="document.getElementById('resolveFormImageFile').click()" 
+               class="border-2 border-dashed border-emerald-300 hover:border-emerald-500 rounded-2xl p-4 text-center cursor-pointer bg-emerald-50/40 hover:bg-white transition flex flex-col items-center justify-center gap-1.5 group">
+            <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-base group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <p class="font-bold text-slate-800 text-xs">Ambil Foto Hasil Fisik / Pilih dari Galeri</p>
+            <p class="text-[10px] text-slate-400">Format: JPG, PNG, WEBP (Otomatis dikompres & disimpan ke Google Drive)</p>
+          </div>
+
+          <div id="resolveImagePreviewWrapper" class="hidden mt-2.5 relative rounded-2xl overflow-hidden border border-emerald-200 bg-slate-950 flex items-center justify-center max-h-52 p-1 shadow-inner">
+            <img id="resolveImagePreviewImg" src="" alt="Bukti Foto Hasil Perbaikan" class="max-h-48 w-full object-contain rounded-xl">
+            <button type="button" onclick="clearResolveImagePreview()" title="Hapus dan ganti foto bukti" 
+                    class="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-xs shadow-lg transition active:scale-90">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <input type="hidden" id="resolveFormImageBase64" value="">
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-3 border-t border-cream-100">
+          <button type="button" onclick="closeModal('modalResolveMaint')" class="px-4 py-2 bg-cream-100 text-slate-700 rounded-xl font-semibold hover:bg-cream-200">Batal</button>
+          <button type="submit" id="btnSubmitResolveMaint" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95">
+            <i class="fa-solid fa-circle-check text-xs"></i>
+            <span id="btnSubmitResolveText">Simpan Status Selesai</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PENGADAAN BARU -->
+  <div id="modalProcurement" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-cream-200 relative my-8 animate-fadeIn">
+      <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+        <h3 id="modalProcureTitle" class="text-base font-bold text-slate-800">Catat Pengadaan Baru</h3>
+        <button onclick="closeModal('modalProcurement')" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formProcure" onsubmit="event.preventDefault(); saveProcurement();" class="space-y-3 mt-4 text-xs">
+        <input type="hidden" id="procureId">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nomor Pengadaan *</label>
+            <input type="text" id="procureNo" required placeholder="PO-2024-001" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Tanggal Pengadaan *</label>
+            <input type="date" id="procureDate" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nama Barang *</label>
+            <input type="text" id="procureName" required placeholder="Proyektor Epson EB-X500" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Kategori</label>
+            <select id="procureKategori" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+              <option value="Elektronik & IT">Elektronik & IT</option>
+              <option value="Mebel & Furniture">Mebel & Furniture</option>
+              <option value="Peralatan Laboratorium">Peralatan Laboratorium</option>
+              <option value="Peralatan Olahraga">Peralatan Olahraga</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Spesifikasi</label>
+          <input type="text" id="procureSpek" placeholder="3600 Lumens, HDMI, XGA" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Jumlah *</label>
+            <input type="number" id="procureQty" required min="1" value="1" oninput="calcProcureTotal()" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Satuan</label>
+            <input type="text" id="procureUnit" value="Unit" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Harga Satuan (Rp) *</label>
+            <input type="number" id="procurePrice" required min="0" value="0" oninput="calcProcureTotal()" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+        </div>
+
+        <div class="p-3 bg-cream-100/70 rounded-xl flex justify-between items-center">
+          <span class="font-bold text-slate-700">Total Nilai Pengadaan:</span>
+          <span id="procureTotalDisplay" class="text-sm font-extrabold dynamic-theme-text">Rp 0</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Sumber Dana</label>
+            <input type="text" id="procureDana" value="BOS Reguler" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Penyedia / Vendor</label>
+            <input type="text" id="procureVendor" placeholder="CV. Sarana Edukasi" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nomor Dokumen Faktur/Kwitansi</label>
+          <input type="text" id="procureDoc" placeholder="INV-2024-889" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-3 border-t border-cream-100">
+          <button type="button" onclick="closeModal('modalProcurement')" class="px-4 py-2 bg-cream-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 dynamic-theme-btn text-white rounded-xl font-bold">Simpan Pengadaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PEMUSNAHAN -->
+  <div id="modalDisposal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-cream-200 relative my-8 animate-fadeIn">
+      <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+        <h3 class="text-base font-bold text-slate-800">Berita Acara Pemusnahan Aset</h3>
+        <button onclick="closeModal('modalDisposal')" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formDisposal" onsubmit="event.preventDefault(); saveDisposal();" class="space-y-3 mt-4 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">No. Berita Acara *</label>
+            <input type="text" id="dispNoBA" required placeholder="BA-AFKIR/2024/001" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Tanggal Pemusnahan *</label>
+            <input type="date" id="dispDate" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Pilih Aset yang Dimusnahkan *</label>
+          <select id="dispAssetId" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl"></select>
+          <p class="text-[10px] text-rose-600 mt-1">* Aset yang dimusnahkan akan dinonaktifkan dari daftar inventaris aktif.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Alasan Pemusnahan *</label>
+            <select id="dispAlasan" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+              <option value="Rusak Total / Tidak Ekonomis Diperbaiki">Rusak Total / Tidak Ekonomis</option>
+              <option value="Usang / Ketinggalan Teknologi">Usang / Ketinggalan Zaman</option>
+              <option value="Hilang / Force Majeure">Hilang / Bencana Alam</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Metode Pemusnahan *</label>
+            <select id="dispMetode" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+              <option value="Dihancurkan / Dibuang">Dihancurkan / Dibuang</option>
+              <option value="Dilelang / Didaur Ulang">Dilelang / Didaur Ulang</option>
+              <option value="Dihibahkan / Disumbangkan">Dihibahkan / Disumbangkan</option>
+              <option value="Dibakar secara aman">Dibakar secara aman</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nama Petugas / Panitia Pemusnahan *</label>
+          <input type="text" id="dispPetugas" required placeholder="Tim Inventarisasi Sekolah" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Keterangan Tambahan Berita Acara</label>
+          <textarea id="dispKet" rows="2" placeholder="Catatan saksi..." class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl"></textarea>
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-3 border-t border-cream-100">
+          <button type="button" onclick="closeModal('modalDisposal')" class="px-4 py-2 bg-cream-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-xl font-bold">Terbitkan Berita Acara</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: BANGUNAN -->
+  <div id="modalBuilding" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-cream-200 relative animate-fadeIn">
+      <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+        <h3 id="modalBuildingTitle" class="text-base font-bold text-slate-800">Tambah Gedung / Bangunan</h3>
+        <button onclick="closeModal('modalBuilding')" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formBuilding" onsubmit="event.preventDefault(); saveBuilding();" class="space-y-3 mt-4 text-xs">
+        <input type="hidden" id="buildingFormId">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Kode Gedung *</label>
+            <input type="text" id="buildingFormKode" required placeholder="GDG-A" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl uppercase">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nama Gedung *</label>
+            <input type="text" id="buildingFormNama" required placeholder="Gedung Utama Pembelajaran" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Fungsi / Jenis</label>
+            <input type="text" id="buildingFormJenis" placeholder="Akademik / Lab / Kantor" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Lokasi / Area</label>
+            <input type="text" id="buildingFormLokasi" placeholder="Sayap Barat Kampus" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Luas (m²)</label>
+            <input type="number" id="buildingFormLuas" value="450" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Tahun Dibangun</label>
+            <input type="number" id="buildingFormTahun" value="2018" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Jumlah Lantai</label>
+            <input type="number" id="buildingFormLantai" value="2" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Kondisi Bangunan</label>
+          <select id="buildingFormKondisi" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+            <option value="Baik">Baik</option>
+            <option value="Rusak Ringan">Rusak Ringan</option>
+            <option value="Perlu Renovasi">Perlu Renovasi</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-3 border-t border-cream-100">
+          <button type="button" onclick="closeModal('modalBuilding')" class="px-4 py-2 bg-cream-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 dynamic-theme-btn text-white rounded-xl font-bold">Simpan Gedung</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: RUANG -->
+  <div id="modalRoom" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-cream-200 relative animate-fadeIn">
+      <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+        <h3 id="modalRoomTitle" class="text-base font-bold text-slate-800">Tambah Ruang Sekolah</h3>
+        <button onclick="closeModal('modalRoom')" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formRoom" onsubmit="event.preventDefault(); saveRoom();" class="space-y-3 mt-4 text-xs">
+        <input type="hidden" id="roomFormId">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Kode Ruang *</label>
+            <input type="text" id="roomFormKode" required placeholder="R-101" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl uppercase">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Nama Ruang *</label>
+            <input type="text" id="roomFormNama" required placeholder="Lab Komputer 1" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Gedung / Bangunan *</label>
+            <select id="roomFormGedungId" required class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl"></select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Jenis / Fungsi Ruang</label>
+            <select id="roomFormJenis" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+              <option value="Ruang Kelas Teori">Ruang Kelas Teori</option>
+              <option value="Laboratorium Komputer">Laboratorium Komputer</option>
+              <option value="Laboratorium IPA">Laboratorium IPA</option>
+              <option value="Perpustakaan">Perpustakaan</option>
+              <option value="Ruang Guru / TU">Ruang Guru / TU</option>
+              <option value="Aula / Serbaguna">Aula / Serbaguna</option>
+              <option value="Gudang Sarpras">Gudang Sarpras</option>
+              <option value="Konseling">Konseling</option>
+              <option value="Tempat Ibadah">Tempat Ibadah</option>
+              <option value="Kantin">Kantin</option>
+              <option value="Koperasi">Koperasi</option>
+              <option value="Ekskul / OSIS">R.Ekskul/OSIS</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Kapasitas (Orang)</label>
+            <input type="number" id="roomFormKapasitas" value="36" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Lantai</label>
+            <input type="number" id="roomFormLantai" value="1" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Kondisi</label>
+            <select id="roomFormKondisi" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+              <option value="Baik">Baik</option>
+              <option value="Rusak Ringan">Rusak Ringan</option>
+              <option value="Perlu Perbaikan">Perlu Perbaikan</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Penanggung Jawab Ruang</label>
+          <input type="text" id="roomFormPJ" placeholder="Nama Koordinator Ruangan" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-3 border-t border-cream-100">
+          <button type="button" onclick="closeModal('modalRoom')" class="px-4 py-2 bg-cream-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 dynamic-theme-btn text-white rounded-xl font-bold">Simpan Ruang</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: USER -->
+  <div id="modalUser" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-cream-200 relative animate-fadeIn">
+      <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+        <h3 id="modalUserTitle" class="text-base font-bold text-slate-800">Tambah Akun Pengguna</h3>
+        <button onclick="closeModal('modalUser')" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="formUser" onsubmit="event.preventDefault(); saveUser();" class="space-y-3 mt-4 text-xs">
+        <input type="hidden" id="userFormId">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Nama Lengkap *</label>
+          <input type="text" id="userFormNama" required placeholder="Budi Santoso, S.Pd" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Username / Email *</label>
+          <input type="text" id="userFormUsername" required placeholder="budi_sarpras" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+        </div>
+        <div>
+          <label id="labelUserFormPassword" class="block font-semibold text-slate-700 mb-1">Password *</label>
+          <input type="password" id="userFormPassword" placeholder="Minimal 6 karakter" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+          <p id="helpUserPassword" class="text-[10px] text-slate-400 mt-0.5 hidden">Kosongkan jika tidak ingin mengubah password saat ini.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Role Akses *</label>
+            <select id="userFormRole" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+              <option value="Admin">Admin (Akses Penuh)</option>
+              <option value="Kepala Sekolah">Kepala Sekolah (Monitoring & Cetak)</option>
+              <option value="Staf">Staf (Operasional Sarpras)</option>
+              <option value="Guest">Guest/Tamu (Khusus Pelayanan)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Status Akun</label>
+            <select id="userFormStatus" class="w-full px-3 py-2 bg-cream-50 border border-cream-200 rounded-xl">
+              <option value="Aktif">Aktif</option>
+              <option value="Nonaktif">Nonaktif</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-3 border-t border-cream-100">
+          <button type="button" onclick="closeModal('modalUser')" class="px-4 py-2 bg-cream-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" id="btnSaveUserSubmit" class="px-5 py-2 dynamic-theme-btn text-white rounded-xl font-bold">
+            <span id="btnSaveUserText">Simpan Akun</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CETAK QR TUNGGAL -->
+  <div id="modalQR" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-cream-200 text-center relative animate-fadeIn">
+      <button onclick="closeModal('modalQR')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div id="printableArea" class="p-4 bg-white border-2 border-dashed border-cream-300 rounded-2xl flex flex-col items-center">
+        <div class="flex items-center space-x-2 mb-2">
+          <i class="fa-solid fa-boxes-stacked dynamic-theme-text text-xs"></i>
+          <span class="text-[11px] font-extrabold text-slate-800 uppercase tracking-wider" id="qrPrintSchool">DIGITAS SARPRAS</span>
+        </div>
+        <div id="qrCodeTarget" class="p-2 bg-white rounded-xl shadow-xs border border-cream-100 flex items-center justify-center my-2"></div>
+        <p id="qrPrintCode" class="text-sm font-extrabold dynamic-theme-text tracking-wider font-mono">AST-2024-001</p>
+        <p id="qrPrintTitle" class="text-xs font-semibold text-slate-800 mt-0.5 line-clamp-1">Laptop Asus ExpertBook</p>
+        <p id="qrPrintSubtitle" class="text-[10px] text-slate-500">Gedung Utama • Lab Komputer 1</p>
+      </div>
+
+      <div class="flex space-x-2 mt-4 no-print">
+        <button onclick="window.print()" class="flex-1 py-2.5 dynamic-theme-btn text-white rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5">
+          <i class="fa-solid fa-print"></i>
+          <span>Cetak Label QR</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DETAIL ASET -->
+  <div id="modalAssetDetail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-cream-200 relative animate-fadeIn">
+      <div class="flex items-center justify-between pb-3 border-b border-cream-100">
+        <div class="flex items-center space-x-2">
+          <h3 id="detailAssetTitle" class="text-base font-bold text-slate-800">Detail Aset</h3>
+          <span id="detailBadgeKondisi" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold"></span>
+        </div>
+        <button onclick="closeModal('modalAssetDetail')" class="text-slate-400 hover:text-slate-700 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <div id="detailAssetBody" class="space-y-3 mt-4 text-xs"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: KONFIRMASI -->
+  <div id="modalConfirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-cream-200 text-center relative animate-fadeIn">
+      <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3 text-xl border border-rose-100">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h4 id="confirmModalTitle" class="text-sm font-bold text-slate-800">Konfirmasi Tindakan</h4>
+      <p id="confirmModalMessage" class="text-xs text-slate-500 mt-1 mb-5">Apakah Anda yakin ingin melanjutkan tindakan ini?</p>
+      
+      <div class="flex space-x-2">
+        <button type="button" onclick="closeModal('modalConfirm')" class="flex-1 py-2.5 bg-cream-100 hover:bg-cream-200 text-slate-700 rounded-xl text-xs font-semibold">
+          Batal
+        </button>
+        <button type="button" id="btnConfirmProceed" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md">
+          Ya, Lanjutkan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pemuatan Modular JavaScript Logika (Google Apps Script Engine) -->
+  <?!= include('js'); ?>
+
+  <!-- Client-Side Modular Loader Otomatis Khusus GitHub Pages / Static Hosting -->
+  <script>
+    (function() {
+      if (typeof google === 'undefined' || !google.script) {
+        fetch('js.html')
+          .then(function(res) { return res.text(); })
+          .then(function(html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+            doc.querySelectorAll('script').forEach(function(sc) {
+              var s = document.createElement('script');
+              s.textContent = sc.textContent;
+              document.body.appendChild(s);
+            });
+            // Jalankan trigger inisialisasi jika dokumen telah selesai diurai browser
+            if (document.readyState !== 'loading') {
+              window.dispatchEvent(new Event('DOMContentLoaded'));
+            }
+          })
+          .catch(function(err) { console.error('[GitHub Pages] Pemuatan js.html statis gagal:', err); });
+      }
+    })();
+  </script>
+</body>
+</html>

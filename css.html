@@ -1,0 +1,253 @@
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['var(--app-font-family, "Inter")', 'sans-serif'],
+          display: ['var(--app-font-family, "Plus Jakarta Sans")', 'sans-serif'],
+        },
+        colors: {
+          cream: {
+            50: '#FDFBF7',
+            100: '#FAF5EC',
+            200: '#F4ECE0',
+            300: '#E8DEC8',
+            400: '#D5C4A3',
+            500: '#BAA177',
+          },
+          magenta: {
+            50: '#FDF2F8',
+            100: '#FCE7F3',
+            200: '#FBCFE8',
+            300: '#F9A8D4',
+            400: '#F472B6',
+            500: '#EC4899',
+            600: '#DB2777',
+            700: '#BE185D',
+            800: '#9D174D',
+            900: '#831843',
+          }
+        },
+        boxShadow: {
+          'soft': '0 4px 20px -2px rgba(190, 24, 93, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04)',
+          'glow': '0 0 25px rgba(219, 39, 119, 0.25)',
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  :root {
+    --app-font-family: 'Inter', sans-serif;
+    --theme-primary: #DB2777;
+    --theme-primary-hover: #BE185D;
+    --theme-primary-light: #FDF2F8;
+    --theme-primary-border: #FBCFE8;
+    --theme-gradient-start: #9D174D;
+    --theme-gradient-mid: #DB2777;
+    --theme-gradient-end: #F43F5E;
+    --theme-bg: #FDFBF7;
+  }
+
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  body {
+    font-family: var(--app-font-family);
+    background-color: var(--theme-bg);
+    transition: background-color 0.3s ease, font-family 0.2s ease;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #FAF5EC;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #F9A8D4;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--theme-primary);
+  }
+
+  /* Animasi Transisi Elemen & Modal */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* ======================================================
+     RESPONSIVE RULES UNTUK LAYAR PONSEL & TABLET (< 1024px)
+     ====================================================== */
+  @media (max-width: 1023px) {
+    /* Proteksi Mutlak: Jangan pernah render desktop sidebar di layar HP */
+    #mainAppSidebar {
+      display: none !important;
+      width: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      visibility: hidden !important;
+    }
+
+    /* Paksa workspace konten utama menjadi 1 Kolom Vertikal Penuh 100% */
+    #mainAppWorkspace {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      flex: 1 1 100% !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+
+    /* Hilangkan kemungkinan horizontal overflow pada view aktif */
+    .app-view {
+      width: 100% !important;
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+    }
+
+    /* Sesuaikan padding header mobile agar pas */
+    #mainAppHeader {
+      width: 100% !important;
+      max-width: 100vw !important;
+    }
+  }
+
+  /* Transisi Halus untuk Mobile Drawer & Backdrop */
+  #mobileDrawer {
+    will-change: transform;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  #mobileDrawerBackdrop {
+    will-change: opacity;
+    transition: opacity 0.25s ease-in-out;
+  }
+
+  /* Optimasi area sentuh tombol (touch target) pada mobile */
+  @media (pointer: coarse) {
+    .nav-btn, button, a {
+      touch-action: manipulation;
+    }
+  }
+
+  .dynamic-theme-btn {
+    background-color: var(--theme-primary) !important;
+  }
+  .dynamic-theme-btn:hover {
+    background-color: var(--theme-primary-hover) !important;
+  }
+  .dynamic-theme-text {
+    color: var(--theme-primary) !important;
+  }
+  .dynamic-theme-border {
+    border-color: var(--theme-primary-border) !important;
+  }
+  .dynamic-theme-bg-light {
+    background-color: var(--theme-primary-light) !important;
+  }
+  .dynamic-gradient-banner {
+    background: linear-gradient(135deg, var(--theme-gradient-start), var(--theme-gradient-mid), var(--theme-gradient-end)) !important;
+  }
+  
+  .glass-input-pill {
+    background-color: rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    color: #ffffff;
+    box-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.15);
+  }
+  .glass-input-pill::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.15s ease, opacity 0.15s ease;
+  }
+  .glass-input-pill:focus {
+    background-color: rgba(255, 255, 255, 0.32);
+    border-color: rgba(255, 255, 255, 0.7);
+    outline: none;
+  }
+  .glass-input-pill:focus::placeholder {
+    color: transparent;
+  }
+
+  /* Tata Letak Media Cetak (Print Styles) */
+  @media print {
+    body * {
+      visibility: hidden;
+    }
+    #printableArea, #printableArea *,
+    #printableBatchArea, #printableBatchArea * {
+      visibility: visible;
+    }
+    #printableArea {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      background: white !important;
+      color: black !important;
+    }
+    #printableBatchArea {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      background: white !important;
+      color: black !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+    @page {
+      margin: 0.8cm;
+      size: auto;
+    }
+  }
+
+  /* Format Kisi Label Stiker Tom & Jerry 103 (12 Label per Lembar: 3 Kolom x 4 Baris) */
+  .grid-label-103 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4mm 6mm;
+  }
+  .label-card-103 {
+    width: 64mm;
+    height: 32mm;
+    box-sizing: border-box;
+    page-break-inside: avoid;
+  }
+
+  /* Format Kisi Label Stiker Tom & Jerry 121 (10 Label per Lembar: 2 Kolom x 5 Baris) */
+  .grid-label-121 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5mm 8mm;
+  }
+  .label-card-121 {
+    width: 76mm;
+    height: 38mm;
+    box-sizing: border-box;
+    page-break-inside: avoid;
+  }
+</style>

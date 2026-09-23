@@ -1,0 +1,3089 @@
+<script>
+  const THEME_PRESETS = [
+    {
+      id: 'magenta-rose',
+      name: 'Magenta Rose',
+      desc: 'Aksen Magenta & Cream',
+      primary: '#DB2777',
+      primaryHover: '#BE185D',
+      primaryLight: '#FDF2F8',
+      primaryBorder: '#FBCFE8',
+      gradStart: '#9D174D',
+      gradMid: '#DB2777',
+      gradEnd: '#F43F5E',
+      bgColor: '#FDFBF7',
+      accentPreview: '#DB2777',
+      bgPreview: '#FAF5EC'
+    },
+    {
+      id: 'sage-harmony',
+      name: 'Sage Harmony',
+      desc: 'Soft Sage & Almond',
+      primary: '#059669',
+      primaryHover: '#047857',
+      primaryLight: '#ECFDF5',
+      primaryBorder: '#A7F3D0',
+      gradStart: '#065F46',
+      gradMid: '#059669',
+      gradEnd: '#10B981',
+      bgColor: '#F5F8F5',
+      accentPreview: '#059669',
+      bgPreview: '#E8EFE9'
+    },
+    {
+      id: 'nordic-ocean',
+      name: 'Nordic Ocean',
+      desc: 'Slate Blue & Ivory',
+      primary: '#2563EB',
+      primaryHover: '#1D4ED8',
+      primaryLight: '#EFF6FF',
+      primaryBorder: '#BFDBFE',
+      gradStart: '#1E40AF',
+      gradMid: '#2563EB',
+      gradEnd: '#38BDF8',
+      bgColor: '#F4F7FB',
+      accentPreview: '#2563EB',
+      bgPreview: '#E5EDF7'
+    },
+    {
+      id: 'lavender-mist',
+      name: 'Lavender Mist',
+      desc: 'Soft Lilac & Pearl',
+      primary: '#7C3AED',
+      primaryHover: '#6D28D9',
+      primaryLight: '#F5F3FF',
+      primaryBorder: '#DDD6FE',
+      gradStart: '#5B21B6',
+      gradMid: '#7C3AED',
+      gradEnd: '#A855F7',
+      bgColor: '#F8F6FC',
+      accentPreview: '#7C3AED',
+      bgPreview: '#EFEBF8'
+    },
+    {
+      id: 'warm-terracotta',
+      name: 'Warm Terracotta',
+      desc: 'Muted Peach & Linen',
+      primary: '#EA580C',
+      primaryHover: '#C2410C',
+      primaryLight: '#FFF7ED',
+      primaryBorder: '#FED7AA',
+      gradStart: '#9A3412',
+      gradMid: '#EA580C',
+      gradEnd: '#FB923C',
+      bgColor: '#FAF7F3',
+      accentPreview: '#EA580C',
+      bgPreview: '#F5EDE4'
+    },
+    {
+      id: 'emerald-mint',
+      name: 'Emerald Mint',
+      desc: 'Soft Teal & Vanilla',
+      primary: '#0D9488',
+      primaryHover: '#0F766E',
+      primaryLight: '#F0FDFA',
+      primaryBorder: '#99F6E4',
+      gradStart: '#115E59',
+      gradMid: '#0D9488',
+      gradEnd: '#14B8A6',
+      bgColor: '#F1FAF8',
+      accentPreview: '#0D9488',
+      bgPreview: '#E2F4F2'
+    }
+  ];
+
+  const FONT_PRESETS = [
+    { id: 'Inter', name: 'Inter', family: "'Inter', sans-serif", desc: 'Netral & Modern (Default)' },
+    { id: 'Plus Jakarta Sans', name: 'Plus Jakarta Sans', family: "'Plus Jakarta Sans', sans-serif", desc: 'Elegan & Profesional' },
+    { id: 'Poppins', name: 'Poppins', family: "'Poppins', sans-serif", desc: 'Geometris & Dinamis' },
+    { id: 'Nunito', name: 'Nunito', family: "'Nunito', sans-serif", desc: 'Lembut & Rounded' },
+    { id: 'Outfit', name: 'Outfit', family: "'Outfit', sans-serif", desc: 'Minimalis & Bersih' },
+    { id: 'DM Sans', name: 'DM Sans', family: "'DM Sans', sans-serif", desc: 'Tegas & Modern' }
+  ];
+
+  const INITIAL_SETTINGS = {
+    appName: 'DIGITAS SARPRAS',
+    schoolName: 'SMP Negeri 2 Banyuwangi',
+    schoolAddress: 'Jl. Ranggawuni No.41 Kel. Kebalenan Banyuwangi',
+    principalName: 'Karyono, S.Pd.,M.T.',
+    principalNIP: '19750812 200003 1 004',
+    selectedTheme: 'magenta-rose',
+    selectedFont: 'Inter'
+  };
+
+  const INITIAL_USERS = [
+    { userId: 'USR-001', nama: 'Administrator Sarpras', username: 'admin', password: 'admin123', role: 'Admin', status: 'Aktif', createdAt: '2024-01-10' },
+    { userId: 'USR-002', nama: 'Drs. H. Mulyono, M.Pd.', username: 'kepsek', password: 'kepsek123', role: 'Kepala Sekolah', status: 'Aktif', createdAt: '2024-01-12' },
+    { userId: 'USR-003', nama: 'Ahmad Fauzi (Staf Sarpras)', username: 'staf', password: 'staf123', role: 'Staf', status: 'Aktif', createdAt: '2024-02-15' },
+    { userId: 'USR-004', nama: 'Guru / Tamu Sekolah', username: 'guru1', password: 'guru123', role: 'Guest', status: 'Aktif', createdAt: '2024-03-01' }
+  ];
+
+  const INITIAL_BUILDINGS = [
+    { gedungId: 'GDG-01', kodeGedung: 'GDG-A', namaGedung: 'Gedung Pembelajaran Teori', jenisBangunan: 'Akademik', lokasi: 'Area Depan Timur', luas: 850, tahunDibangun: 2016, jumlahLantai: 2, kondisi: 'Baik', keterangan: 'Kondisi fisik kokoh cat baru' },
+    { gedungId: 'GDG-02', kodeGedung: 'GDG-B', namaGedung: 'Gedung Laboratorium Komputer & RPL', jenisBangunan: 'Praktik/Lab', lokasi: 'Sayap Barat', luas: 620, tahunDibangun: 2019, jumlahLantai: 2, kondisi: 'Baik', keterangan: 'Fasilitas jaringan LAN terpasang' },
+    { gedungId: 'GDG-03', kodeGedung: 'GDG-C', namaGedung: 'Gedung Manajemen & Perpustakaan', jenisBangunan: 'Administrasi', lokasi: 'Pusat Kampus', luas: 420, tahunDibangun: 2015, jumlahLantai: 1, kondisi: 'Baik', keterangan: 'Pusat administrasi sarpras' }
+  ];
+
+  const INITIAL_ROOMS = [
+    { ruangId: 'RNG-01', kodeRuang: 'R-101', namaRuang: 'Lab Komputer RPL 1', jenisRuang: 'Laboratorium Komputer', gedungId: 'GDG-02', lokasi: 'Lantai 1', luas: 72, kapasitas: 36, lantai: 1, kondisi: 'Baik', penanggungJawab: 'Ahmad Fauzi, S.Kom', keterangan: 'Lab utama pemrograman' },
+    { ruangId: 'RNG-02', kodeRuang: 'R-102', namaRuang: 'Lab Komputer Multimedia', jenisRuang: 'Laboratorium Komputer', gedungId: 'GDG-02', lokasi: 'Lantai 2', luas: 72, kapasitas: 36, lantai: 2, kondisi: 'Baik', penanggungJawab: 'Rina Kartika, M.Kom', keterangan: 'Lab editing video & grafis' },
+    { ruangId: 'RNG-03', kodeRuang: 'R-201', namaRuang: 'Ruang Kelas XI RPL A', jenisRuang: 'Ruang Kelas Teori', gedungId: 'GDG-01', lokasi: 'Lantai 1', luas: 64, kapasitas: 36, lantai: 1, kondisi: 'Baik', penanggungJawab: 'Dwi Astuti, S.Pd', keterangan: 'Dilengkapi smart board' },
+    { ruangId: 'RNG-04', kodeRuang: 'R-301', namaRuang: 'Perpustakaan Digital', jenisRuang: 'Perpustakaan', gedungId: 'GDG-03', lokasi: 'Lantai 1', luas: 120, kapasitas: 60, lantai: 1, kondisi: 'Baik', penanggungJawab: 'Siti Nurhaliza, S.Sos', keterangan: 'Ruang baca ber-AC' }
+  ];
+
+  const INITIAL_ASSETS = [
+    {
+      assetId: 'AST-001',
+      kodeBarang: 'AST-2024-001',
+      namaBarang: 'PC All-in-One HP 24-cb1015d',
+      kategori: 'Elektronik & IT',
+      spesifikasi: 'Core i5-1235U, RAM 16GB, SSD 512GB, 23.8" FHD',
+      tahunPerolehan: 2023,
+      sumberDana: 'BOS Kinerja',
+      hargaPerolehan: 12500000,
+      jumlah: 1,
+      satuan: 'Unit',
+      kondisi: 'Baik',
+      gedungId: 'GDG-02',
+      ruangId: 'RNG-01',
+      penanggungJawab: 'Ahmad Fauzi, S.Kom',
+      statusAset: 'Aktif',
+      keterangan: 'PC Guru / Server Lokal Lab'
+    },
+    {
+      assetId: 'AST-002',
+      kodeBarang: 'AST-2024-002',
+      namaBarang: 'Proyektor Epson EB-E500 3LCD',
+      kategori: 'Elektronik & IT',
+      spesifikasi: '3300 ANSI Lumens, XGA, HDMI',
+      tahunPerolehan: 2022,
+      sumberDana: 'BOS Reguler',
+      hargaPerolehan: 5800000,
+      jumlah: 1,
+      satuan: 'Unit',
+      kondisi: 'Rusak Berat',
+      gedungId: 'GDG-01',
+      ruangId: 'RNG-03',
+      penanggungJawab: 'Dwi Astuti, S.Pd',
+      statusAset: 'Aktif',
+      keterangan: 'Lampu proyektor mati mendadak saat pembelajaran'
+    },
+    {
+      assetId: 'AST-003',
+      kodeBarang: 'AST-2024-003',
+      namaBarang: 'AC Split Daikin Flash Inverter 2 PK',
+      kategori: 'Elektronik & IT',
+      spesifikasi: 'FTKQ50UVM4, R32, 2 PK',
+      tahunPerolehan: 2021,
+      sumberDana: 'Komite / Hibah',
+      hargaPerolehan: 8200000,
+      jumlah: 1,
+      satuan: 'Unit',
+      kondisi: 'Rusak Ringan',
+      gedungId: 'GDG-02',
+      ruangId: 'RNG-01',
+      penanggungJawab: 'Ahmad Fauzi, S.Kom',
+      statusAset: 'Aktif',
+      keterangan: 'Perlu servis cuci rutin & tambah freon'
+    }
+  ];
+
+  const INITIAL_MAINTENANCE = [
+    {
+      maintenanceId: 'MNT-001',
+      assetId: 'AST-002',
+      tanggalLaporan: '2024-08-20',
+      kerusakan: 'Lampu proyektor mati total dan indikator overheat berkedip merah',
+      status: 'Belum Diperbaiki',
+      tanggalSelesai: '',
+      kondisiSetelah: '',
+      catatanPerbaikan: '',
+      fotoPerbaikanUrl: '',
+      updatedBy: 'Admin Utama'
+    }
+  ];
+
+  const INITIAL_PROCUREMENTS = [];
+  const INITIAL_DISPOSALS = [];
+  const INITIAL_ACTIVITIES = [
+    { id: 'ACT-1', text: 'Pencatatan aset PC All-in-One HP', time: 'Hari ini, 08:30', icon: 'fa-plus text-emerald-600' }
+  ];
+
+  let GAS_API_URL = localStorage.getItem('DS_GAS_API_URL') || '';
+
+  /**
+   * Universal Bridge API: Menghubungkan Frontend ke Google Apps Script
+   * Mendukung mode GAS Internal (google.script.run) dan mode GitHub Pages (fetch REST API)
+   */
+  async function callBackendApi(action, payload, onSuccess, onFailure) {
+    payload = payload || {};
+    payload.action = action;
+
+    // 1. Jika dijalankan di dalam container Google Apps Script
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      const runner = google.script.run
+        .withSuccessHandler(function(res) { if (onSuccess) onSuccess(res); })
+        .withFailureHandler(function(err) { if (onFailure) onFailure(err); });
+
+      if (action === 'getInitialData') runner.apiGetInitialData();
+      else if (action === 'saveAsset') runner.apiSaveAsset(payload.data || payload);
+      else if (action === 'deleteAsset') runner.apiDeleteAsset(payload.assetId);
+      else if (action === 'saveMaintenance') runner.apiSaveMaintenance(payload.data || payload);
+      else if (action === 'saveQuickReportWithImage') runner.apiSaveQuickReportWithImage(payload.data || payload);
+      else if (action === 'saveProcurement') runner.apiSaveProcurement(payload.data || payload);
+      else if (action === 'saveDisposal') runner.apiSaveDisposal(payload.data || payload);
+      else if (action === 'saveUser') runner.apiSaveUser(payload.data || payload);
+      else if (action === 'deleteUser') runner.apiDeleteUser(payload.userId);
+      else if (action === 'saveSettings') runner.apiSaveSettings(payload.settings || payload.data || {});
+      else if (action === 'syncAllData') runner.apiSyncAllData(payload.payload || payload);
+      else if (action === 'getDetailIdentifikasiQR') runner.apiGetDetailIdentifikasiQR(payload.code);
+      return;
+    }
+
+    // 2. Jika dijalankan di GitHub Pages / Static Hosting
+    const targetUrl = GAS_API_URL || localStorage.getItem('DS_GAS_API_URL');
+    if (!targetUrl) {
+      console.warn('[ZettBOT Hub] URL Backend Google Apps Script belum disetel di menu Pengaturan.');
+      if (onFailure) onFailure(new Error('URL Web App Google Apps Script belum dikonfigurasi di Pengaturan'));
+      return;
+    }
+
+    try {
+      // Mengirimkan text/plain murni untuk mencegah CORS Preflight OPTIONS di server Apps Script
+      const response = await fetch(targetUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+      });
+
+      if (!response.ok) {
+        throw new Error('HTTP Status: ' + response.status);
+      }
+
+      const data = await response.json();
+      if (onSuccess) onSuccess(data);
+    } catch (err) {
+      console.error('[API Fetch Error]:', err);
+      if (onFailure) onFailure(err);
+    }
+  }
+
+  const DB = {
+    users: JSON.parse(localStorage.getItem('DS_USERS')) || INITIAL_USERS,
+    assets: JSON.parse(localStorage.getItem('DS_ASSETS')) || INITIAL_ASSETS,
+    buildings: JSON.parse(localStorage.getItem('DS_BUILDINGS')) || INITIAL_BUILDINGS,
+    rooms: JSON.parse(localStorage.getItem('DS_ROOMS')) || INITIAL_ROOMS,
+    maintenance: JSON.parse(localStorage.getItem('DS_MAINTENANCE')) || INITIAL_MAINTENANCE,
+    procurements: JSON.parse(localStorage.getItem('DS_PROCUREMENTS')) || INITIAL_PROCUREMENTS,
+    disposals: JSON.parse(localStorage.getItem('DS_DISPOSALS')) || INITIAL_DISPOSALS,
+    settings: JSON.parse(localStorage.getItem('DS_SETTINGS')) || INITIAL_SETTINGS,
+    activities: JSON.parse(localStorage.getItem('DS_ACTIVITIES')) || INITIAL_ACTIVITIES,
+    currentUser: JSON.parse(sessionStorage.getItem('DS_AUTH_USER')) || null,
+
+    save: function() {
+      localStorage.setItem('DS_USERS', JSON.stringify(this.users));
+      localStorage.setItem('DS_ASSETS', JSON.stringify(this.assets));
+      localStorage.setItem('DS_BUILDINGS', JSON.stringify(this.buildings));
+      localStorage.setItem('DS_ROOMS', JSON.stringify(this.rooms));
+      localStorage.setItem('DS_MAINTENANCE', JSON.stringify(this.maintenance));
+      localStorage.setItem('DS_PROCUREMENTS', JSON.stringify(this.procurements));
+      localStorage.setItem('DS_DISPOSALS', JSON.stringify(this.disposals));
+      localStorage.setItem('DS_SETTINGS', JSON.stringify(this.settings));
+      localStorage.setItem('DS_ACTIVITIES', JSON.stringify(this.activities));
+    },
+
+    logActivity: function(text, icon) {
+      icon = icon || 'fa-circle-info text-magenta-600';
+      const now = new Date();
+      const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+      this.activities.unshift({ id: 'ACT-' + Date.now(), text: text, time: 'Hari ini, ' + timeStr, icon: icon });
+      if (this.activities.length > 20) this.activities.pop();
+      this.save();
+    }
+  };
+
+  let currentMaintenanceFilter = 'pending';
+  let currentProcureTab = 'procure';
+  let pendingConfirmAction = null;
+  let responCameraScanner = null;
+  let isResponCameraRunning = false;
+
+  function playScannerBeep() {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try { navigator.vibrate([80, 40, 80]); } catch (e) {}
+    }
+
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        const ctx = new AudioCtx();
+        if (ctx.state === 'suspended') ctx.resume();
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1760, ctx.currentTime);
+
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.12);
+
+        setTimeout(function() {
+          try { ctx.close(); } catch (e) {}
+        }, 350);
+      }
+    } catch (err) {
+      console.warn('Audio beep feedback error:', err);
+    }
+  }
+
+  async function toggleCameraScannerRespon() {
+    if (isResponCameraRunning) {
+      await stopCameraScannerRespon();
+    } else {
+      await startCameraScannerRespon();
+    }
+  }
+
+  async function startCameraScannerRespon() {
+    const readerEl = document.getElementById('qr-reader-respon');
+    const placeholderEl = document.getElementById('qrStandbyPlaceholderRespon');
+    const btn = document.getElementById('btnToggleCameraRespon');
+    const btnText = document.getElementById('btnToggleCameraResponText');
+
+    if (!readerEl) return;
+
+    try {
+      if (btnText) btnText.innerText = 'Menyalakan Kamera...';
+      if (btn) btn.disabled = true;
+
+      if (!responCameraScanner) {
+        responCameraScanner = new Html5Qrcode('qr-reader-respon');
+      }
+
+      const qrBoxSize = Math.min(240, Math.floor(window.innerWidth * 0.65));
+      const config = {
+        fps: 15,
+        qrbox: { width: qrBoxSize, height: qrBoxSize },
+        aspectRatio: 1.0
+      };
+
+      await responCameraScanner.start(
+        { facingMode: "environment" },
+        config,
+        function onScanSuccess(decodedText) {
+          playScannerBeep();
+          stopCameraScannerRespon();
+          lookupCode(decodedText, 'scanResultContentRespon', 'scanResultPlaceholderRespon');
+          showToast('Kode QR berhasil dipindai!', 'success');
+        },
+        function onScanFailure() {}
+      );
+
+      isResponCameraRunning = true;
+      if (placeholderEl) placeholderEl.classList.add('hidden');
+      readerEl.classList.remove('hidden');
+
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('dynamic-theme-btn');
+        btn.classList.add('bg-slate-700', 'hover:bg-slate-800');
+      }
+      if (btnText) btnText.innerText = 'Matikan Kamera';
+
+    } catch (err) {
+      console.error('Kamera error:', err);
+      isResponCameraRunning = false;
+      if (placeholderEl) placeholderEl.classList.remove('hidden');
+      readerEl.classList.add('hidden');
+
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.add('dynamic-theme-btn');
+        btn.classList.remove('bg-slate-700', 'hover:bg-slate-800');
+      }
+      if (btnText) btnText.innerText = 'Nyalakan Kamera';
+
+      let msg = 'Izin kamera dibutuhkan. Pastikan Anda telah mengizinkan browser mengakses kamera.';
+      showToast(msg, 'error');
+    }
+  }
+
+  async function stopCameraScannerRespon() {
+    const readerEl = document.getElementById('qr-reader-respon');
+    const placeholderEl = document.getElementById('qrStandbyPlaceholderRespon');
+    const btn = document.getElementById('btnToggleCameraRespon');
+    const btnText = document.getElementById('btnToggleCameraResponText');
+
+    if (responCameraScanner && isResponCameraRunning) {
+      try {
+        await responCameraScanner.stop();
+        await responCameraScanner.clear();
+      } catch (err) {
+        console.warn('Error stopping scanner:', err);
+      }
+    }
+    responCameraScanner = null;
+    isResponCameraRunning = false;
+
+    if (readerEl) readerEl.classList.add('hidden');
+    if (placeholderEl) placeholderEl.classList.remove('hidden');
+
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.add('dynamic-theme-btn');
+      btn.classList.remove('bg-slate-700', 'hover:bg-slate-800');
+    }
+    if (btnText) btnText.innerText = 'Nyalakan Kamera';
+  }
+
+  async function scanFromImageFile(fileInput) {
+    if (!fileInput.files || fileInput.files.length === 0) return;
+    const imageFile = fileInput.files[0];
+
+    showToast('Memproses jepretan kamera / gambar...', 'info');
+
+    try {
+      const isRespon = !document.getElementById('view-respon')?.classList.contains('hidden');
+      const targetReader = isRespon ? 'qr-reader-respon' : 'qr-reader';
+
+      const scannerEngine = new Html5Qrcode(targetReader);
+      const decodedText = await scannerEngine.scanFile(imageFile, true);
+      
+      playScannerBeep();
+      lookupCode(decodedText);
+      showToast('QR Code berhasil diidentifikasi!', 'success');
+    } catch (err) {
+      showToast('Kode QR tidak terdeteksi. Pastikan foto tegak, fokus, dan pencahayaan cukup.', 'error');
+    } finally {
+      fileInput.value = '';
+    }
+  }
+
+  function handleReportImagePreview(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1000;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+
+        const previewWrapper = document.getElementById('maintImagePreviewWrapper');
+        const previewImg = document.getElementById('maintImagePreviewImg');
+        const uploadBox = document.getElementById('maintImageUploadBox');
+        const base64Input = document.getElementById('maintFormImageBase64');
+
+        if (previewImg) previewImg.src = compressedBase64;
+        if (previewWrapper) previewWrapper.classList.remove('hidden');
+        if (uploadBox) uploadBox.classList.add('hidden');
+        if (base64Input) base64Input.value = compressedBase64;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearReportImagePreview() {
+    const fileInput = document.getElementById('maintFormImageFile');
+    const previewWrapper = document.getElementById('maintImagePreviewWrapper');
+    const previewImg = document.getElementById('maintImagePreviewImg');
+    const uploadBox = document.getElementById('maintImageUploadBox');
+    const base64Input = document.getElementById('maintFormImageBase64');
+
+    if (fileInput) fileInput.value = '';
+    if (previewImg) previewImg.src = '';
+    if (previewWrapper) previewWrapper.classList.add('hidden');
+    if (uploadBox) uploadBox.classList.remove('hidden');
+    if (base64Input) base64Input.value = '';
+  }
+
+  function handleResolveImagePreview(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1000;
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+
+        const previewWrapper = document.getElementById('resolveImagePreviewWrapper');
+        const previewImg = document.getElementById('resolveImagePreviewImg');
+        const uploadBox = document.getElementById('resolveImageUploadBox');
+        const base64Input = document.getElementById('resolveFormImageBase64');
+
+        if (previewImg) previewImg.src = compressedBase64;
+        if (previewWrapper) previewWrapper.classList.remove('hidden');
+        if (uploadBox) uploadBox.classList.add('hidden');
+        if (base64Input) base64Input.value = compressedBase64;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearResolveImagePreview() {
+    const fileInput = document.getElementById('resolveFormImageFile');
+    const previewWrapper = document.getElementById('resolveImagePreviewWrapper');
+    const previewImg = document.getElementById('resolveImagePreviewImg');
+    const uploadBox = document.getElementById('resolveImageUploadBox');
+    const base64Input = document.getElementById('resolveFormImageBase64');
+
+    if (fileInput) fileInput.value = '';
+    if (previewImg) previewImg.src = '';
+    if (previewWrapper) previewWrapper.classList.add('hidden');
+    if (uploadBox) uploadBox.classList.remove('hidden');
+    if (base64Input) base64Input.value = '';
+  }
+
+  function applySystemTheme(themeId, fontId) {
+    const theme = THEME_PRESETS.find(function(t) { return t.id === themeId; }) || THEME_PRESETS[0];
+    const font = FONT_PRESETS.find(function(f) { return f.id === fontId; }) || FONT_PRESETS[0];
+
+    const root = document.documentElement;
+    root.style.setProperty('--app-font-family', font.family);
+    root.style.setProperty('--theme-primary', theme.primary);
+    root.style.setProperty('--theme-primary-hover', theme.primaryHover);
+    root.style.setProperty('--theme-primary-light', theme.primaryLight);
+    root.style.setProperty('--theme-primary-border', theme.primaryBorder);
+    root.style.setProperty('--theme-gradient-start', theme.gradStart);
+    root.style.setProperty('--theme-gradient-mid', theme.gradMid);
+    root.style.setProperty('--theme-gradient-end', theme.gradEnd);
+    root.style.setProperty('--theme-bg', theme.bgColor);
+
+    document.body.style.fontFamily = font.family;
+    document.body.style.backgroundColor = theme.bgColor;
+
+    DB.settings.selectedTheme = theme.id;
+    DB.settings.selectedFont = font.id;
+    DB.save();
+
+    renderThemePresets();
+    renderFontPresets();
+  }
+
+  function selectThemePreset(themeId) {
+    applySystemTheme(themeId, DB.settings.selectedFont || 'Inter');
+    showToast('Tema "' + (THEME_PRESETS.find(function(t) { return t.id === themeId; })?.name || themeId) + '" diterapkan!');
+    syncSettingsToBackend({ selectedTheme: themeId });
+  }
+
+  function selectFontPreset(fontId) {
+    applySystemTheme(DB.settings.selectedTheme || 'magenta-rose', fontId);
+    showToast('Font diubah ke "' + fontId + '"!');
+    syncSettingsToBackend({ selectedFont: fontId });
+  }
+
+  function saveThemeAndFontSettings() {
+    const btn = document.getElementById('btnSaveThemeAndFont');
+    const origHtml = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.classList.add('opacity-75', 'cursor-not-allowed');
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan ke Google Sheets...';
+
+    DB.save();
+
+    const payload = {
+      selectedTheme: DB.settings.selectedTheme || 'magenta-rose',
+      selectedFont: DB.settings.selectedFont || 'Inter'
+    };
+
+    callBackendApi('saveSettings', payload, function(res) {
+      btn.disabled = false;
+      btn.classList.remove('opacity-75', 'cursor-not-allowed');
+      btn.innerHTML = origHtml;
+      showToast('Tema warna & font berhasil disimpan ke Google Sheets!', 'success');
+      DB.logActivity('Tema diubah ke ' + payload.selectedTheme, 'fa-palette dynamic-theme-text');
+    }, function() {
+      btn.disabled = false;
+      btn.classList.remove('opacity-75', 'cursor-not-allowed');
+      btn.innerHTML = origHtml;
+      showToast('Tersimpan di penyimpanan lokal.', 'info');
+    });
+  }
+
+  function renderThemePresets() {
+    const container = document.getElementById('themePresetGrid');
+    if (!container) return;
+    const currentTheme = DB.settings.selectedTheme || 'magenta-rose';
+
+    container.innerHTML = THEME_PRESETS.map(function(t) {
+      const isActive = t.id === currentTheme;
+      return '<button type="button" onclick="selectThemePreset(\'' + t.id + '\')" ' +
+        'class="p-2.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between ' + 
+        (isActive ? 'border-2 border-slate-800 bg-white shadow-md ring-2 ring-slate-800/10' : 'border-cream-300 bg-cream-50/70 hover:bg-white hover:border-slate-400') + '">' +
+        '<div>' +
+          '<div class="flex items-center space-x-1.5 mb-2">' +
+            '<div class="w-6 h-6 rounded-lg shadow-xs" style="background-color: ' + t.accentPreview + ';"></div>' +
+            '<div class="w-6 h-6 rounded-lg border border-slate-300" style="background-color: ' + t.bgPreview + ';"></div>' +
+          '</div>' +
+          '<p class="text-[11px] font-bold text-slate-800 leading-tight">' + t.name + '</p>' +
+          '<p class="text-[9px] text-slate-400 mt-0.5">' + t.desc + '</p>' +
+        '</div>' +
+        (isActive ? 
+          '<span class="mt-2 inline-flex items-center gap-1 text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md self-start"><i class="fa-solid fa-check text-[8px]"></i> Aktif</span>' : 
+          '<span class="mt-2 text-[9px] text-slate-400">Klik untuk pakai</span>') +
+      '</button>';
+    }).join('');
+  }
+
+  function renderFontPresets() {
+    const container = document.getElementById('fontPresetGrid');
+    if (!container) return;
+    const currentFont = DB.settings.selectedFont || 'Inter';
+
+    container.innerHTML = FONT_PRESETS.map(function(f) {
+      const isActive = f.id === currentFont;
+      return '<button type="button" onclick="selectFontPreset(\'' + f.id + '\')" ' +
+        'class="p-2.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between ' + 
+        (isActive ? 'border-2 border-slate-800 bg-white shadow-md ring-2 ring-slate-800/10' : 'border-cream-300 bg-cream-50/70 hover:bg-white hover:border-slate-400') + '">' +
+        '<div>' +
+          '<p class="text-sm font-bold text-slate-800" style="font-family: ' + f.family + ';">' + f.name + '</p>' +
+          '<p class="text-[9px] text-slate-400 mt-0.5">' + f.desc + '</p>' +
+          '<p class="text-[10px] text-slate-600 mt-1 font-medium" style="font-family: ' + f.family + ';">Aa Bb Gg 123</p>' +
+        '</div>' +
+        (isActive ? 
+          '<span class="mt-2 inline-flex items-center gap-1 text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md self-start"><i class="fa-solid fa-check text-[8px]"></i> Aktif</span>' : 
+          '<span class="mt-2 text-[9px] text-slate-400">Pilih font</span>') +
+      '</button>';
+    }).join('');
+  }
+
+  function promptConfirmation(title, message, onConfirmCallback) {
+    document.getElementById('confirmModalTitle').innerText = title;
+    document.getElementById('confirmModalMessage').innerText = message;
+    pendingConfirmAction = onConfirmCallback;
+
+    const proceedBtn = document.getElementById('btnConfirmProceed');
+    proceedBtn.onclick = function() {
+      if (typeof pendingConfirmAction === 'function') {
+        pendingConfirmAction();
+      }
+      closeModal('modalConfirm');
+    };
+    openModal('modalConfirm');
+  }
+
+  function showToast(message, type) {
+    type = type || 'success';
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    
+    const isSuccess = type === 'success';
+    const isError = type === 'error';
+    const bg = isSuccess ? 'bg-white border-emerald-500 text-emerald-800' : isError ? 'bg-white border-rose-500 text-rose-800' : 'bg-white border-slate-500 text-slate-800';
+    const icon = isSuccess ? 'fa-circle-check text-emerald-600' : isError ? 'fa-circle-xmark text-rose-600' : 'fa-circle-info dynamic-theme-text';
+
+    toast.className = 'p-3.5 rounded-2xl shadow-soft border-l-4 ' + bg + ' flex items-center space-x-3 pointer-events-auto transform transition-all duration-300 translate-y-2 opacity-0 text-xs font-semibold';
+    toast.innerHTML = '<i class="fa-solid ' + icon + ' text-base shrink-0"></i>' +
+      '<span class="flex-1">' + message + '</span>' +
+      '<button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 ml-2">' +
+        '<i class="fa-solid fa-xmark"></i>' +
+      '</button>';
+
+    container.appendChild(toast);
+    setTimeout(function() {
+      toast.classList.remove('translate-y-2', 'opacity-0');
+    }, 50);
+
+    setTimeout(function() {
+      toast.classList.add('opacity-0', 'translate-x-full');
+      setTimeout(function() { toast.remove(); }, 300);
+    }, 4000);
+  }
+
+  function openModal(modalId) {
+    const m = document.getElementById(modalId);
+    if (m) m.classList.remove('hidden');
+  }
+
+  function closeModal(modalId) {
+    const m = document.getElementById(modalId);
+    if (m) m.classList.add('hidden');
+  }
+
+  function togglePasswordVisibility(fieldId, btn) {
+    const field = document.getElementById(fieldId);
+    const icon = btn.querySelector('i');
+    if (field.type === 'password') {
+      field.type = 'text';
+      icon.className = 'fa-regular fa-eye-slash text-sm';
+    } else {
+      field.type = 'password';
+      icon.className = 'fa-regular fa-eye text-sm';
+    }
+  }
+
+  function applyRolePermissions() {
+    const role = DB.currentUser?.role || 'Admin';
+    const isGuest = role === 'Guest' || role === 'Guest/Tamu' || role === 'Tamu';
+
+    document.querySelectorAll('.nav-section-main, .nav-section-infra').forEach(function(el) {
+      if (isGuest) el.classList.add('hidden');
+      else el.classList.remove('hidden');
+    });
+
+    document.querySelectorAll('.role-non-guest').forEach(function(el) {
+      if (isGuest) el.classList.add('hidden');
+      else el.classList.remove('hidden');
+    });
+
+    const mobHome = document.querySelector('[data-mob-nav="dashboard"]');
+    const mobAset = document.querySelector('[data-mob-nav="assets"]');
+    const mobServis = document.querySelector('[data-mob-nav="maintenance"]');
+    if (mobHome) mobHome.style.display = isGuest ? 'none' : '';
+    if (mobAset) mobAset.style.display = isGuest ? 'none' : '';
+    if (mobServis) mobServis.style.display = isGuest ? 'none' : '';
+
+    document.querySelectorAll('.role-admin-only').forEach(function(el) {
+      if (role === 'Admin') el.classList.remove('hidden');
+      else el.classList.add('hidden');
+    });
+
+    document.querySelectorAll('.role-action-btn').forEach(function(btn) {
+      if (role === 'Kepala Sekolah' || isGuest) btn.classList.add('hidden');
+      else btn.classList.remove('hidden');
+    });
+
+    const noticeBanner = document.getElementById('roleNoticeBanner');
+    const titleEl = document.getElementById('roleNoticeTitle');
+    const descEl = document.getElementById('roleNoticeDesc');
+    const pillEl = document.getElementById('roleNoticePill');
+
+    if (noticeBanner) {
+      noticeBanner.classList.remove('hidden');
+      if (role === 'Admin') {
+        noticeBanner.className = 'p-3.5 rounded-2xl border dynamic-theme-bg-light dynamic-theme-border flex items-center justify-between text-xs';
+        titleEl.innerText = 'Hak Akses: Administrator Utama';
+        descEl.innerText = 'Wewenang penuh untuk kelola seluruh data aset, perbaikan, berita acara, akun, dan pengaturan tema sistem.';
+        pillEl.innerText = 'Admin';
+      } else if (role === 'Kepala Sekolah') {
+        noticeBanner.className = 'p-3.5 rounded-2xl border bg-indigo-50/70 border-indigo-200 flex items-center justify-between text-xs';
+        titleEl.innerText = 'Hak Akses: Kepala Sekolah (Monitoring & Cetak)';
+        descEl.innerText = 'Akses monitoring analitik, inspeksi sarpras via QR-Code, export CSV, dan pencetakan Berita Acara resmi.';
+        pillEl.innerText = 'Kepala Sekolah';
+      } else if (isGuest) {
+        noticeBanner.className = 'p-3.5 rounded-2xl border bg-amber-50/70 border-amber-200 flex items-center justify-between text-xs';
+        titleEl.innerText = 'Hak Akses: Guest / Tamu (Khusus Pelayanan)';
+        descEl.innerText = 'Akses khusus pemindaian QR Tanggap Cepat dan pelaporan kerusakan sarpras lapangan.';
+        pillEl.innerText = 'Guest';
+      } else {
+        noticeBanner.className = 'p-3.5 rounded-2xl border bg-emerald-50/70 border-emerald-200 flex items-center justify-between text-xs';
+        titleEl.innerText = 'Hak Akses: Staf Sarpras (Operasional)';
+        descEl.innerText = 'Akses input aset baru, checklist perbaikan/servis berkala, pengadaan, dan pemindaian label QR.';
+        pillEl.innerText = 'Staf Sarpras';
+      }
+    }
+  }
+
+  function handleLogin() {
+    const u = document.getElementById('loginUsername').value.trim();
+    const p = document.getElementById('loginPassword').value.trim();
+
+    const foundUser = DB.users.find(function(user) {
+      return user.username.toLowerCase() === u.toLowerCase() || user.userId === u;
+    });
+
+    if (!foundUser) {
+      showToast('Username atau akun tidak ditemukan!', 'error');
+      return;
+    }
+
+    if (foundUser.password !== p) {
+      showToast('Password yang dimasukkan salah!', 'error');
+      return;
+    }
+
+    if (foundUser.status === 'Nonaktif') {
+      showToast('Akun Anda dinonaktifkan oleh Administrator.', 'error');
+      return;
+    }
+
+    DB.currentUser = foundUser;
+    sessionStorage.setItem('DS_AUTH_USER', JSON.stringify(foundUser));
+    DB.logActivity(foundUser.nama + ' berhasil masuk', 'fa-right-to-bracket dynamic-theme-text');
+    
+    initAppSession();
+    showToast('Selamat datang, ' + foundUser.nama + '!', 'success');
+  }
+
+  function handleLogout() {
+    if (isResponCameraRunning) {
+      stopCameraScannerRespon();
+    }
+
+    DB.currentUser = null;
+    sessionStorage.removeItem('DS_AUTH_USER');
+
+    const uInput = document.getElementById('loginUsername');
+    const pInput = document.getElementById('loginPassword');
+    if (uInput) uInput.value = '';
+    if (pInput) pInput.value = '';
+
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('mainApp').classList.add('hidden');
+    document.getElementById('userDropdown').classList.add('hidden');
+    closeMobileSidebar();
+    showToast('Anda telah keluar dari aplikasi.', 'info');
+  }
+
+  function toggleUserDropdown() {
+    document.getElementById('userDropdown').classList.toggle('hidden');
+  }
+
+  function toggleMobileSidebar() {
+    const drawer = document.getElementById('mobileDrawer');
+    const backdrop = document.getElementById('mobileDrawerBackdrop');
+    if (!drawer || !backdrop) return;
+    const isOpen = !drawer.classList.contains('-translate-x-full');
+
+    if (isOpen) {
+      closeMobileSidebar();
+    } else {
+      drawer.classList.remove('-translate-x-full');
+      backdrop.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeMobileSidebar() {
+    const drawer = document.getElementById('mobileDrawer');
+    const backdrop = document.getElementById('mobileDrawerBackdrop');
+    if (drawer && !drawer.classList.contains('-translate-x-full')) {
+      drawer.classList.add('-translate-x-full');
+    }
+    if (backdrop && !backdrop.classList.contains('hidden')) {
+      backdrop.classList.add('hidden');
+    }
+    document.body.style.overflow = '';
+  }
+
+  function navigateTo(viewId) {
+    closeMobileSidebar();
+
+    if (viewId !== 'respon' && isResponCameraRunning) {
+      stopCameraScannerRespon();
+    }
+
+    const role = DB.currentUser?.role;
+    const isGuest = role === 'Guest' || role === 'Guest/Tamu' || role === 'Tamu';
+
+    if (isGuest && viewId !== 'respon') {
+      showToast('Akses dibatasi. Akun Guest/Tamu hanya memiliki akses ke menu Pelayanan!', 'error');
+      viewId = 'respon';
+    }
+
+    document.querySelectorAll('.app-view').forEach(function(v) { v.classList.add('hidden'); });
+    const target = document.getElementById('view-' + viewId);
+    if (target) target.classList.remove('hidden');
+
+    document.querySelectorAll('.nav-btn').forEach(function(btn) {
+      const icon = btn.querySelector('i');
+      if (btn.getAttribute('data-nav') === viewId) {
+        btn.className = 'nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold dynamic-theme-btn text-white shadow-sm transition';
+        if (icon) icon.className = icon.className.replace('text-slate-400', 'text-white').replace('text-amber-500', 'text-white');
+      } else {
+        btn.className = 'nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-cream-100 transition';
+        if (icon) {
+          if (btn.getAttribute('data-nav') === 'respon') {
+            icon.className = 'fa-solid fa-bolt w-5 text-center text-amber-500';
+          } else {
+            icon.className = icon.className.replace('text-white', 'text-slate-400');
+          }
+        }
+      }
+    });
+
+    document.querySelectorAll('[data-mob-nav]').forEach(function(btn) {
+      if (btn.getAttribute('data-mob-nav') === viewId) {
+        btn.classList.add('dynamic-theme-text', 'font-bold');
+        btn.classList.remove('text-slate-500');
+      } else {
+        btn.classList.remove('dynamic-theme-text', 'font-bold');
+        btn.classList.add('text-slate-500');
+      }
+    });
+
+    if (viewId === 'dashboard') refreshDashboard();
+    if (viewId === 'assets') renderAssetsTable();
+    if (viewId === 'maintenance') renderMaintenanceView();
+    if (viewId === 'procurements') renderProcurementAndDisposal();
+    if (viewId === 'buildings') renderBuildingsView();
+    if (viewId === 'rooms') renderRoomsView();
+    if (viewId === 'cetak-qr') {
+      initCetakQRFilters();
+      muatDataCetakQR();
+    }
+    if (viewId === 'users') {
+      if (DB.currentUser?.role !== 'Admin') {
+        showToast('Menu Akun Pengguna hanya dapat diakses oleh Administrator!', 'error');
+        navigateTo(isGuest ? 'respon' : 'dashboard');
+        return;
+      }
+      renderUsersView();
+    }
+    if (viewId === 'settings') {
+      if (DB.currentUser?.role !== 'Admin') {
+        showToast('Menu Pengaturan Sistem hanya dapat diakses oleh Administrator!', 'error');
+        navigateTo(isGuest ? 'respon' : 'dashboard');
+        return;
+      }
+      loadSettingsForm();
+    }
+  }
+
+  function refreshDashboard() {
+    const activeAssets = DB.assets.filter(function(a) { return a.statusAset === 'Aktif'; });
+    const total = activeAssets.length;
+    const baik = activeAssets.filter(function(a) { return a.kondisi === 'Baik'; }).length;
+    const rusakRingan = activeAssets.filter(function(a) { return a.kondisi === 'Rusak Ringan'; }).length;
+    const rusakBerat = activeAssets.filter(function(a) { return a.kondisi === 'Rusak Berat'; }).length;
+
+    document.getElementById('statTotalAssets').innerText = total;
+    document.getElementById('statKondisiBaik').innerText = baik;
+    document.getElementById('statRusakRingan').innerText = rusakRingan;
+    document.getElementById('statRusakBerat').innerText = rusakBerat;
+    document.getElementById('statPersenBaik').innerText = total > 0 ? (Math.round((baik / total) * 100) + '% dari total') : '0%';
+
+    document.getElementById('statTotalBuildings').innerText = DB.buildings.length;
+    document.getElementById('statTotalRooms').innerText = DB.rooms.length;
+    document.getElementById('statTotalProcurements').innerText = DB.procurements.length;
+
+    const pendingMaint = DB.maintenance.filter(function(m) { return m.status === 'Belum Diperbaiki'; });
+    document.getElementById('statNeedsRepair').innerText = pendingMaint.length;
+
+    const badgePending = document.getElementById('badgePendingMaint');
+    if (pendingMaint.length > 0) {
+      badgePending.innerText = pendingMaint.length;
+      badgePending.classList.remove('hidden');
+    } else {
+      badgePending.classList.add('hidden');
+    }
+
+    const maintListEl = document.getElementById('dashboardMaintenanceList');
+    if (pendingMaint.length === 0) {
+      maintListEl.innerHTML = '<div class="py-6 text-center text-xs text-slate-400">Tidak ada tanggungan perbaikan aktif saat ini. Semua aset terawat.</div>';
+    } else {
+      maintListEl.innerHTML = pendingMaint.slice(0, 5).map(function(m) {
+        let targetName = 'Aset Tak Terdaftar';
+        let targetKode = m.assetId;
+        const ast = DB.assets.find(function(a) { return a.assetId === m.assetId; });
+        const rm = DB.rooms.find(function(r) { return r.ruangId === m.assetId; });
+        const bg = DB.buildings.find(function(b) { return b.gedungId === m.assetId; });
+
+        if (ast) { targetName = ast.namaBarang; targetKode = ast.kodeBarang; }
+        else if (rm) { targetName = 'Ruang: ' + rm.namaRuang; targetKode = rm.kodeRuang; }
+        else if (bg) { targetName = 'Gedung: ' + bg.namaGedung; targetKode = bg.kodeGedung; }
+
+        return '<div class="py-3 flex items-center justify-between text-xs">' +
+          '<div>' +
+            '<p class="font-bold text-slate-800">' + targetName + '</p>' +
+            '<p class="text-[11px] text-rose-600">' + m.kerusakan + '</p>' +
+            '<span class="text-[10px] text-slate-400">Dilaporkan: ' + m.tanggalLaporan + ' (' + targetKode + ')</span>' +
+          '</div>' +
+          '<button onclick="openResolveModal(\'' + m.maintenanceId + '\')" class="role-action-btn px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-bold transition">Selesaikan</button>' +
+        '</div>';
+      }).join('');
+    }
+
+    const actListEl = document.getElementById('dashboardActivityList');
+    actListEl.innerHTML = DB.activities.slice(0, 5).map(function(act) {
+      return '<div class="flex space-x-3 text-xs">' +
+        '<div class="w-7 h-7 rounded-lg bg-cream-100 flex items-center justify-center shrink-0 mt-0.5">' +
+          '<i class="fa-solid ' + act.icon + ' text-xs"></i>' +
+        '</div>' +
+        '<div class="flex-1 min-w-0">' +
+          '<p class="text-slate-800 font-medium leading-snug">' + act.text + '</p>' +
+          '<p class="text-[10px] text-slate-400 mt-0.5">' + act.time + '</p>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderAssetsTable() {
+    const q = (document.getElementById('assetSearchInput')?.value || '').toLowerCase();
+    const kat = document.getElementById('filterAssetKategori')?.value || '';
+    const kon = document.getElementById('filterAssetKondisi')?.value || '';
+    const gdg = document.getElementById('filterAssetGedung')?.value || '';
+
+    const filtered = DB.assets.filter(function(a) {
+      if (a.statusAset !== 'Aktif') return false;
+      const matchQ = (a.kodeBarang + ' ' + a.namaBarang + ' ' + (a.spesifikasi || '')).toLowerCase().includes(q);
+      const matchKat = !kat || a.kategori === kat;
+      const matchKon = !kon || a.kondisi === kon;
+      const matchGdg = !gdg || a.gedungId === gdg;
+      return matchQ && matchKat && matchKon && matchGdg;
+    });
+
+    const tbody = document.getElementById('assetsTableBody');
+    const mobileCards = document.getElementById('assetsMobileCardContainer');
+    const emptyState = document.getElementById('assetsEmptyState');
+
+    if (filtered.length === 0) {
+      if (tbody) tbody.innerHTML = '';
+      if (mobileCards) mobileCards.innerHTML = '';
+      if (emptyState) emptyState.classList.remove('hidden');
+      return;
+    }
+    if (emptyState) emptyState.classList.add('hidden');
+
+    if (tbody) {
+      tbody.innerHTML = filtered.map(function(a) {
+        const bg = DB.buildings.find(function(b) { return b.gedungId === a.gedungId; }) || { namaGedung: '-' };
+        const rm = DB.rooms.find(function(r) { return r.ruangId === a.ruangId; }) || { namaRuang: '-' };
+        
+        let badgeKondisi = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        if (a.kondisi === 'Rusak Ringan') badgeKondisi = 'bg-amber-50 text-amber-700 border-amber-200';
+        if (a.kondisi === 'Rusak Berat') badgeKondisi = 'bg-rose-50 text-rose-700 border-rose-200';
+
+        return '<tr class="hover:bg-cream-50/60 transition">' +
+          '<td class="py-3 px-4">' +
+            '<p class="font-bold text-slate-800">' + a.namaBarang + '</p>' +
+            '<p class="text-[11px] font-mono dynamic-theme-text">' + a.kodeBarang + '</p>' +
+          '</td>' +
+          '<td class="py-3 px-4">' +
+            '<span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-cream-100 text-slate-700">' + a.kategori + '</span>' +
+          '</td>' +
+          '<td class="py-3 px-4">' +
+            '<p class="font-semibold text-slate-800">' + bg.namaGedung + '</p>' +
+            '<p class="text-[11px] text-slate-500">' + rm.namaRuang + '</p>' +
+          '</td>' +
+          '<td class="py-3 px-4">' +
+            '<p class="font-bold text-slate-800">' + a.jumlah + ' ' + (a.satuan || 'Unit') + '</p>' +
+            '<p class="text-[11px] text-slate-500">Rp ' + Number(a.hargaPerolehan || 0).toLocaleString('id-ID') + '</p>' +
+          '</td>' +
+          '<td class="py-3 px-4 text-center">' +
+            '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ' + badgeKondisi + '">' + a.kondisi + '</span>' +
+          '</td>' +
+          '<td class="py-3 px-4 text-right space-x-1">' +
+            '<button onclick="showQRCode(\'' + a.assetId + '\', \'asset\')" title="Cetak QR" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-cream-200">' +
+              '<i class="fa-solid fa-qrcode"></i>' +
+            '</button>' +
+            '<button onclick="showAssetDetail(\'' + a.assetId + '\')" title="Detail" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-cream-200">' +
+              '<i class="fa-solid fa-eye"></i>' +
+            '</button>' +
+            '<button onclick="editAsset(\'' + a.assetId + '\')" title="Edit" class="role-action-btn p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-cream-200">' +
+              '<i class="fa-solid fa-pen-to-square"></i>' +
+            '</button>' +
+            '<button onclick="deleteAssetConfirm(\'' + a.assetId + '\')" title="Hapus" class="role-action-btn p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50">' +
+              '<i class="fa-solid fa-trash"></i>' +
+            '</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    if (mobileCards) {
+      mobileCards.innerHTML = filtered.map(function(a) {
+        const bg = DB.buildings.find(function(b) { return b.gedungId === a.gedungId; }) || { namaGedung: '-' };
+        const rm = DB.rooms.find(function(r) { return r.ruangId === a.ruangId; }) || { namaRuang: '-' };
+        let badgeKondisi = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        if (a.kondisi === 'Rusak Ringan') badgeKondisi = 'bg-amber-50 text-amber-700 border-amber-200';
+        if (a.kondisi === 'Rusak Berat') badgeKondisi = 'bg-rose-50 text-rose-700 border-rose-200';
+
+        return '<div class="p-3 bg-cream-50/50 rounded-xl space-y-2 border border-cream-100">' +
+          '<div class="flex justify-between items-start">' +
+            '<div>' +
+              '<p class="font-bold text-slate-800 text-xs">' + a.namaBarang + '</p>' +
+              '<p class="text-[10px] font-mono dynamic-theme-text">' + a.kodeBarang + '</p>' +
+            '</div>' +
+            '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold border ' + badgeKondisi + '">' + a.kondisi + '</span>' +
+          '</div>' +
+          '<div class="text-[11px] text-slate-600">' +
+            '<p><i class="fa-solid fa-location-dot w-4 text-slate-400"></i> ' + bg.namaGedung + ' • ' + rm.namaRuang + '</p>' +
+            '<p><i class="fa-solid fa-boxes-stacked w-4 text-slate-400"></i> ' + a.jumlah + ' ' + (a.satuan || 'Unit') + ' (Rp ' + Number(a.hargaPerolehan || 0).toLocaleString('id-ID') + ')</p>' +
+          '</div>' +
+          '<div class="pt-2 border-t border-cream-200 flex justify-end space-x-1.5">' +
+            '<button onclick="showQRCode(\'' + a.assetId + '\', \'asset\')" class="px-2.5 py-1 rounded-lg bg-white border border-cream-300 text-[10px] font-bold text-slate-700"><i class="fa-solid fa-qrcode mr-1"></i>QR</button>' +
+            '<button onclick="showAssetDetail(\'' + a.assetId + '\')" class="px-2.5 py-1 rounded-lg bg-white border border-cream-300 text-[10px] font-bold text-slate-700"><i class="fa-solid fa-eye mr-1"></i>Detail</button>' +
+            '<button onclick="editAsset(\'' + a.assetId + '\')" class="role-action-btn px-2.5 py-1 rounded-lg dynamic-theme-btn text-[10px] font-bold text-white"><i class="fa-solid fa-pen mr-1"></i>Edit</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    applyRolePermissions();
+  }
+
+  function populateGedungFilterDropdown() {
+    const select = document.getElementById('filterAssetGedung');
+    if (!select) return;
+    select.innerHTML = '<option value="">Semua Gedung</option>' + DB.buildings.map(function(b) {
+      return '<option value="' + b.gedungId + '">' + b.namaGedung + ' (' + b.kodeGedung + ')</option>';
+    }).join('');
+  }
+
+  function populateRoomDropdownForAsset(selectedGedungId, defaultRoomId) {
+    const select = document.getElementById('assetFormRuang');
+    if (!select) return;
+    const rooms = DB.rooms.filter(function(r) { return r.gedungId === selectedGedungId; });
+
+    if (rooms.length === 0) {
+      select.innerHTML = '<option value="">(Tidak ada ruang pada gedung ini)</option>';
+    } else {
+      select.innerHTML = rooms.map(function(r) {
+        const isSel = r.ruangId === defaultRoomId ? 'selected' : '';
+        return '<option value="' + r.ruangId + '" ' + isSel + '>' + r.namaRuang + ' (' + r.kodeRuang + ')</option>';
+      }).join('');
+    }
+  }
+
+  function openAssetModal(assetId) {
+    const form = document.getElementById('formAsset');
+    form.reset();
+
+    const gdgSelect = document.getElementById('assetFormGedung');
+    gdgSelect.innerHTML = DB.buildings.map(function(b) {
+      return '<option value="' + b.gedungId + '">' + b.namaGedung + ' (' + b.kodeGedung + ')</option>';
+    }).join('');
+
+    if (assetId) {
+      const a = DB.assets.find(function(item) { return item.assetId === assetId; });
+      if (!a) return;
+      document.getElementById('modalAssetTitle').innerText = 'Edit Data Aset';
+      document.getElementById('assetFormId').value = a.assetId;
+      document.getElementById('assetFormKode').value = a.kodeBarang;
+      document.getElementById('assetFormNama').value = a.namaBarang;
+      document.getElementById('assetFormKategori').value = a.kategori;
+      document.getElementById('assetFormSpesifikasi').value = a.spesifikasi || '';
+      document.getElementById('assetFormTahun').value = a.tahunPerolehan || 2024;
+      document.getElementById('assetFormSumberDana').value = a.sumberDana || 'BOS Reguler';
+      document.getElementById('assetFormHarga').value = a.hargaPerolehan || 0;
+      document.getElementById('assetFormJumlah').value = a.jumlah || 1;
+      document.getElementById('assetFormSatuan').value = a.satuan || 'Unit';
+      document.getElementById('assetFormKondisi').value = a.kondisi || 'Baik';
+      gdgSelect.value = a.gedungId;
+      populateRoomDropdownForAsset(a.gedungId, a.ruangId);
+      document.getElementById('assetFormPJ').value = a.penanggungJawab || '';
+      document.getElementById('assetFormKet').value = a.keterangan || '';
+    } else {
+      document.getElementById('modalAssetTitle').innerText = 'Tambah Data Aset Baru';
+      document.getElementById('assetFormId').value = '';
+      document.getElementById('assetFormKode').value = 'AST-' + new Date().getFullYear() + '-' + String(DB.assets.length + 1).padStart(3, '0');
+      if (DB.buildings.length > 0) {
+        populateRoomDropdownForAsset(DB.buildings[0].gedungId);
+      }
+    }
+    openModal('modalAsset');
+  }
+
+  function editAsset(assetId) {
+    openAssetModal(assetId);
+  }
+
+  function saveAsset() {
+    const assetId = document.getElementById('assetFormId').value;
+    const kode = document.getElementById('assetFormKode').value.trim().toUpperCase();
+    const nama = document.getElementById('assetFormNama').value.trim();
+
+    if (!kode || !nama) {
+      showToast('Harap lengkapi kode dan nama aset!', 'error');
+      return;
+    }
+
+    const isEdit = !!assetId;
+    const assetData = {
+      assetId: assetId || ('AST-' + Date.now()),
+      kodeBarang: kode,
+      namaBarang: nama,
+      kategori: document.getElementById('assetFormKategori').value,
+      spesifikasi: document.getElementById('assetFormSpesifikasi').value.trim(),
+      tahunPerolehan: Number(document.getElementById('assetFormTahun').value),
+      sumberDana: document.getElementById('assetFormSumberDana').value,
+      hargaPerolehan: Number(document.getElementById('assetFormHarga').value),
+      jumlah: Number(document.getElementById('assetFormJumlah').value),
+      satuan: document.getElementById('assetFormSatuan').value.trim() || 'Unit',
+      kondisi: document.getElementById('assetFormKondisi').value,
+      gedungId: document.getElementById('assetFormGedung').value,
+      ruangId: document.getElementById('assetFormRuang').value,
+      penanggungJawab: document.getElementById('assetFormPJ').value.trim(),
+      statusAset: 'Aktif',
+      keterangan: document.getElementById('assetFormKet').value.trim()
+    };
+
+    if (isEdit) {
+      const idx = DB.assets.findIndex(function(a) { return a.assetId === assetId; });
+      if (idx !== -1) DB.assets[idx] = assetData;
+      DB.logActivity('Aset ' + nama + ' diperbarui', 'fa-pen-to-square text-amber-600');
+      showToast('Data aset berhasil diperbarui!');
+    } else {
+      DB.assets.unshift(assetData);
+      DB.logActivity('Aset baru ' + nama + ' ditambahkan', 'fa-plus text-emerald-600');
+      showToast('Aset baru berhasil disimpan!');
+    }
+
+    DB.save();
+    closeModal('modalAsset');
+    renderAssetsTable();
+    refreshDashboard();
+
+    callBackendApi('saveAsset', assetData);
+  }
+
+  function deleteAssetConfirm(assetId) {
+    const a = DB.assets.find(function(item) { return item.assetId === assetId; });
+    if (!a) return;
+
+    promptConfirmation('Hapus Data Aset', 'Apakah Anda yakin ingin menghapus data aset "' + a.namaBarang + '" (' + a.kodeBarang + ')?', function() {
+      DB.assets = DB.assets.filter(function(item) { return item.assetId !== assetId; });
+      DB.save();
+      DB.logActivity('Aset ' + a.namaBarang + ' dihapus', 'fa-trash text-rose-600');
+      showToast('Aset telah dihapus.');
+      renderAssetsTable();
+      refreshDashboard();
+
+      callBackendApi('deleteAsset', { assetId: assetId });
+    });
+  }
+
+  function showAssetDetail(assetId) {
+    const a = DB.assets.find(function(item) { return item.assetId === assetId; });
+    if (!a) return;
+
+    const bg = DB.buildings.find(function(b) { return b.gedungId === a.gedungId; }) || { namaGedung: '-' };
+    const rm = DB.rooms.find(function(r) { return r.ruangId === a.ruangId; }) || { namaRuang: '-' };
+
+    document.getElementById('detailAssetTitle').innerText = a.namaBarang;
+    const badge = document.getElementById('detailBadgeKondisi');
+    badge.innerText = a.kondisi;
+    badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold ' + 
+      (a.kondisi === 'Baik' ? 'bg-emerald-50 text-emerald-700' : a.kondisi === 'Rusak Ringan' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700');
+
+    document.getElementById('detailAssetBody').innerHTML = 
+      '<div class="grid grid-cols-2 gap-2 text-slate-600">' +
+        '<div><span class="text-slate-400 block text-[10px]">Kode Barang:</span><span class="font-mono font-bold text-slate-800">' + a.kodeBarang + '</span></div>' +
+        '<div><span class="text-slate-400 block text-[10px]">Kategori:</span><span class="font-medium text-slate-800">' + a.kategori + '</span></div>' +
+        '<div><span class="text-slate-400 block text-[10px]">Lokasi Gedung:</span><span class="font-medium text-slate-800">' + bg.namaGedung + '</span></div>' +
+        '<div><span class="text-slate-400 block text-[10px]">Ruang:</span><span class="font-medium text-slate-800">' + rm.namaRuang + '</span></div>' +
+        '<div><span class="text-slate-400 block text-[10px]">Jumlah:</span><span class="font-medium text-slate-800">' + a.jumlah + ' ' + (a.satuan || 'Unit') + '</span></div>' +
+        '<div><span class="text-slate-400 block text-[10px]">Harga Perolehan:</span><span class="font-medium text-slate-800">Rp ' + Number(a.hargaPerolehan || 0).toLocaleString('id-ID') + '</span></div>' +
+        '<div><span class="text-slate-400 block text-[10px]">Tahun Perolehan:</span><span class="font-medium text-slate-800">' + a.tahunPerolehan + ' (' + a.sumberDana + ')</span></div>' +
+        '<div><span class="text-slate-400 block text-[10px]">Penanggung Jawab:</span><span class="font-medium text-slate-800">' + (a.penanggungJawab || '-') + '</span></div>' +
+      '</div>' +
+      (a.spesifikasi ? '<div class="pt-2 border-t border-cream-100"><span class="text-slate-400 block text-[10px]">Spesifikasi Teknis:</span><p class="text-slate-700 text-xs font-medium">' + a.spesifikasi + '</p></div>' : '') +
+      (a.keterangan ? '<div class="pt-2 border-t border-cream-100"><span class="text-slate-400 block text-[10px]">Keterangan:</span><p class="text-slate-700 text-xs font-medium">' + a.keterangan + '</p></div>' : '') +
+      '<div class="pt-3 border-t border-cream-100 flex justify-end space-x-2">' +
+        '<button onclick="showQRCode(\'' + a.assetId + '\', \'asset\')" class="px-3 py-1.5 rounded-xl dynamic-theme-btn text-white text-xs font-bold"><i class="fa-solid fa-qrcode mr-1"></i>Label QR</button>' +
+      '</div>';
+    openModal('modalAssetDetail');
+  }
+
+  function exportAssetsCSV() {
+    if (DB.assets.length === 0) {
+      showToast('Tidak ada data aset untuk diekspor!', 'error');
+      return;
+    }
+    const headers = ['Kode Barang', 'Nama Barang', 'Kategori', 'Kondisi', 'Jumlah', 'Satuan', 'Harga Perolehan', 'Tahun', 'Sumber Dana', 'Gedung', 'Ruang', 'Penanggung Jawab', 'Status'];
+    const rows = DB.assets.map(function(a) {
+      const bg = DB.buildings.find(function(b) { return b.gedungId === a.gedungId; })?.namaGedung || '';
+      const rm = DB.rooms.find(function(r) { return r.ruangId === a.ruangId; })?.namaRuang || '';
+      return [
+        '"' + a.kodeBarang + '"',
+        '"' + a.namaBarang + '"',
+        '"' + a.kategori + '"',
+        '"' + a.kondisi + '"',
+        a.jumlah,
+        '"' + a.satuan + '"',
+        a.hargaPerolehan,
+        a.tahunPerolehan,
+        '"' + a.sumberDana + '"',
+        '"' + bg + '"',
+        '"' + rm + '"',
+        '"' + (a.penanggungJawab || '') + '"',
+        '"' + a.statusAset + '"'
+      ].join(',');
+    });
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + headers.join(',') + '\n' + rows.join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'Data_Aset_Sarpras_' + new Date().toISOString().slice(0, 10) + '.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Export CSV berhasil diunduh!');
+  }
+
+  function setMaintenanceTab(tab) {
+    currentMaintenanceFilter = tab;
+    const pTab = document.getElementById('tabMaintPending');
+    const cTab = document.getElementById('tabMaintCompleted');
+
+    if (tab === 'pending') {
+      pTab.className = 'flex-1 py-2 rounded-xl text-xs font-bold transition bg-white dynamic-theme-text shadow-xs';
+      cTab.className = 'flex-1 py-2 rounded-xl text-xs font-bold transition text-slate-600 hover:text-slate-900';
+    } else {
+      cTab.className = 'flex-1 py-2 rounded-xl text-xs font-bold transition bg-white dynamic-theme-text shadow-xs';
+      pTab.className = 'flex-1 py-2 rounded-xl text-xs font-bold transition text-slate-600 hover:text-slate-900';
+    }
+    renderMaintenanceView();
+  }
+
+  function renderMaintenanceView() {
+    const container = document.getElementById('maintenanceCardsContainer');
+    const emptyState = document.getElementById('maintenanceEmptyState');
+
+    const pending = DB.maintenance.filter(function(m) { return m.status === 'Belum Diperbaiki'; });
+    const completed = DB.maintenance.filter(function(m) { return m.status === 'Selesai'; });
+
+    document.getElementById('countMaintPending').innerText = pending.length;
+    document.getElementById('countMaintCompleted').innerText = completed.length;
+
+    const items = currentMaintenanceFilter === 'pending' ? pending : completed;
+
+    if (items.length === 0) {
+      container.innerHTML = '';
+      emptyState.classList.remove('hidden');
+      return;
+    }
+    emptyState.classList.add('hidden');
+
+    container.innerHTML = items.map(function(m) {
+      let targetName = 'Entitas Tidak Terdaftar';
+      let targetKode = '-';
+      let targetSub = 'Aset / Lokasi';
+
+      const ast = DB.assets.find(function(a) { return a.assetId === m.assetId; });
+      const rm = DB.rooms.find(function(r) { return r.ruangId === m.assetId; });
+      const bg = DB.buildings.find(function(b) { return b.gedungId === m.assetId; });
+
+      if (ast) {
+        targetName = ast.namaBarang;
+        targetKode = ast.kodeBarang;
+        targetSub = 'Aset Sarpras • ' + ast.kategori;
+      } else if (rm) {
+        targetName = 'Ruangan: ' + rm.namaRuang;
+        targetKode = rm.kodeRuang;
+        targetSub = 'Fasilitas Ruang • Lantai ' + (rm.lantai || 1);
+      } else if (bg) {
+        targetName = 'Bangunan: ' + bg.namaGedung;
+        targetKode = bg.kodeGedung;
+        targetSub = 'Infrastruktur Gedung • ' + (bg.jenisBangunan || 'Bangunan');
+      }
+
+      const isDone = m.status === 'Selesai';
+
+      return '<div class="bg-white rounded-2xl border border-cream-200/80 p-4 shadow-soft space-y-3 flex flex-col justify-between">' +
+        '<div>' +
+          '<div class="flex items-start justify-between">' +
+            '<div>' +
+              '<h4 class="font-bold text-slate-800 text-sm">' + targetName + '</h4>' +
+              '<p class="text-[11px] font-mono dynamic-theme-text font-bold">' + targetKode + '</p>' +
+              '<span class="text-[10px] text-slate-400">' + targetSub + '</span>' +
+            '</div>' +
+            '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold ' + 
+              (isDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200') + '">' +
+              (isDone ? '<i class="fa-solid fa-check mr-1"></i>Selesai' : '<i class="fa-solid fa-wrench mr-1"></i>Perlu Perbaikan') +
+            '</span>' +
+          '</div>' +
+          '<div class="p-3 bg-cream-50 rounded-xl my-2 border border-cream-100 text-xs">' +
+            '<p class="text-slate-400 text-[10px] font-semibold uppercase">Detail Kerusakan:</p>' +
+            '<p class="text-slate-700 mt-0.5">' + m.kerusakan + '</p>' +
+          '</div>' +
+          (isDone ? 
+            '<div class="p-3 bg-emerald-50/70 rounded-xl border border-emerald-100 text-xs space-y-1.5">' +
+              '<p class="text-[10px] font-bold text-emerald-800 uppercase">Catatan Hasil Perbaikan:</p>' +
+              '<p class="text-emerald-900 leading-relaxed">' + (m.catatanPerbaikan || 'Selesai tanpa catatan khusus.') + '</p>' +
+              '<div class="flex flex-wrap items-center justify-between gap-1 pt-1 border-t border-emerald-200/70 text-[10px] text-emerald-700">' +
+                '<span>Tgl: <strong>' + m.tanggalSelesai + '</strong></span>' +
+                '<span>Kondisi: <strong>' + m.kondisiSetelah + '</strong></span>' +
+              '</div>' +
+              (m.fotoPerbaikanUrl ? 
+                '<div class="pt-1.5">' +
+                  '<a href="' + m.fotoPerbaikanUrl + '" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shadow-xs transition">' +
+                    '<i class="fa-solid fa-image"></i>' +
+                    '<span>Buka Foto Bukti Fisik Perbaikan (Google Drive)</span>' +
+                  '</a>' +
+                '</div>' : '') +
+            '</div>' : '') +
+        '</div>' +
+        '<div class="pt-2 border-t border-cream-100 flex items-center justify-between text-xs">' +
+          '<span class="text-[11px] text-slate-400">Lapor: ' + m.tanggalLaporan + '</span>' +
+          (!isDone ? 
+            '<button onclick="openResolveModal(\'' + m.maintenanceId + '\')" class="role-action-btn px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-xs flex items-center space-x-1">' +
+              '<i class="fa-solid fa-circle-check"></i><span>Selesaikan</span>' +
+            '</button>' : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    applyRolePermissions();
+  }
+
+  function openReportMaintenanceModal(presetTargetId, targetType) {
+    const select = document.getElementById('maintFormAssetId');
+    const label = document.getElementById('labelReportTarget');
+    if (label) label.innerText = 'Target yang Rusak (Aset / Ruang / Gedung) *';
+
+    let optionsHtml = '';
+
+    const activeAssets = DB.assets.filter(function(a) { return a.statusAset === 'Aktif'; });
+    if (activeAssets.length > 0) {
+      optionsHtml += '<optgroup label="-- DAFTAR ASET SARPRAS --">';
+      activeAssets.forEach(function(a) {
+        const isSel = (a.assetId === presetTargetId || a.kodeBarang === presetTargetId) ? 'selected' : '';
+        optionsHtml += '<option value="' + a.assetId + '" ' + isSel + '>' + a.namaBarang + ' (' + a.kodeBarang + ')</option>';
+      });
+      optionsHtml += '</optgroup>';
+    }
+
+    if (DB.rooms.length > 0) {
+      optionsHtml += '<optgroup label="-- DATA RUANGAN SEKOLAH --">';
+      DB.rooms.forEach(function(r) {
+        const isSel = (r.ruangId === presetTargetId || r.kodeRuang === presetTargetId) ? 'selected' : '';
+        optionsHtml += '<option value="' + r.ruangId + '" ' + isSel + '>Ruang: ' + r.namaRuang + ' (' + r.kodeRuang + ')</option>';
+      });
+      optionsHtml += '</optgroup>';
+    }
+
+    if (DB.buildings.length > 0) {
+      optionsHtml += '<optgroup label="-- DATA BANGUNAN / GEDUNG --">';
+      DB.buildings.forEach(function(b) {
+        const isSel = (b.gedungId === presetTargetId || b.kodeGedung === presetTargetId) ? 'selected' : '';
+        optionsHtml += '<option value="' + b.gedungId + '" ' + isSel + '>Gedung: ' + b.namaGedung + ' (' + b.kodeGedung + ')</option>';
+      });
+      optionsHtml += '</optgroup>';
+    }
+
+    select.innerHTML = optionsHtml;
+    document.getElementById('maintFormTanggal').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('maintFormKerusakan').value = '';
+    
+    const pelaporInput = document.getElementById('maintFormPelapor');
+    if (pelaporInput) {
+      pelaporInput.value = DB.currentUser?.nama || '';
+    }
+
+    clearReportImagePreview();
+    openModal('modalReportMaint');
+  }
+
+  function submitMaintenanceReport() {
+    const targetId = document.getElementById('maintFormAssetId').value;
+    const tanggal = document.getElementById('maintFormTanggal').value;
+    const kondisiBaru = document.getElementById('maintFormKondisiBaru')?.value || 'Rusak Berat';
+    const kerusakan = document.getElementById('maintFormKerusakan').value.trim();
+    const imageBase64 = document.getElementById('maintFormImageBase64')?.value || '';
+    const pelapor = document.getElementById('maintFormPelapor')?.value.trim() || (DB.currentUser?.nama || 'Warga Sekolah / Tamu');
+
+    if (!targetId || !kerusakan) {
+      showToast('Pilih objek kerusakan dan jelaskan kendala!', 'error');
+      return;
+    }
+
+    const btnSubmit = document.getElementById('btnSubmitMaintReport');
+    const btnText = document.getElementById('btnSubmitMaintText');
+    if (btnSubmit) btnSubmit.disabled = true;
+    if (btnText) btnText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Mengirim...';
+
+    let kodeObj = targetId;
+    let namaObj = 'Entitas Sarpras';
+    let lokasiStr = 'Area Sekolah';
+
+    const ast = DB.assets.find(function(a) { return a.assetId === targetId || a.kodeBarang === targetId; });
+    const rm = DB.rooms.find(function(r) { return r.ruangId === targetId || r.kodeRuang === targetId; });
+    const bg = DB.buildings.find(function(b) { return b.gedungId === targetId || b.kodeGedung === targetId; });
+
+    if (ast) {
+      kodeObj = ast.kodeBarang;
+      namaObj = ast.namaBarang;
+      ast.kondisi = kondisiBaru;
+      const bParent = DB.buildings.find(function(b) { return b.gedungId === ast.gedungId; });
+      const rParent = DB.rooms.find(function(r) { return r.ruangId === ast.ruangId; });
+      lokasiStr = (bParent ? bParent.namaGedung : '-') + ' / ' + (rParent ? rParent.namaRuang : '-');
+    } else if (rm) {
+      kodeObj = rm.kodeRuang;
+      namaObj = 'Ruang: ' + rm.namaRuang;
+      rm.kondisi = kondisiBaru;
+      const bParent = DB.buildings.find(function(b) { return b.gedungId === rm.gedungId; });
+      lokasiStr = (bParent ? bParent.namaGedung : '-') + ' • Lantai ' + (rm.lantai || 1);
+    } else if (bg) {
+      kodeObj = bg.kodeGedung;
+      namaObj = 'Gedung: ' + bg.namaGedung;
+      bg.kondisi = kondisiBaru;
+      lokasiStr = bg.lokasi || 'Area Kampus Sekolah';
+    }
+
+    const payload = {
+      assetId: targetId,
+      kodeBarang: kodeObj,
+      namaBarang: namaObj,
+      lokasi: lokasiStr,
+      tanggalLaporan: tanggal,
+      kondisiBaru: kondisiBaru,
+      detailKerusakan: kerusakan,
+      imageBase64: imageBase64,
+      pelapor: pelapor
+    };
+
+    callBackendApi('saveQuickReportWithImage', payload, function(res) {
+      if (btnSubmit) btnSubmit.disabled = false;
+      if (btnText) btnText.innerText = 'Kirim Laporan';
+
+      if (res && res.success) {
+        showToast(res.message || 'Laporan berhasil dikirim dan tersimpan di database!', 'success');
+
+        DB.maintenance.unshift({
+          maintenanceId: res.laporanId || ('MNT-' + Date.now()),
+          assetId: targetId,
+          tanggalLaporan: tanggal,
+          kerusakan: (DB.currentUser?.role === 'Guest' ? '[PELAYANAN] ' : '') + kerusakan + (res.fotoUrl ? ' (Foto terlampir)' : ''),
+          status: 'Belum Diperbaiki',
+          tanggalSelesai: '',
+          kondisiSetelah: '',
+          catatanPerbaikan: '',
+          fotoPerbaikanUrl: '',
+          updatedBy: pelapor
+        });
+        DB.save();
+        DB.logActivity('Laporan kerusakan ' + namaObj + ' masuk', 'fa-triangle-exclamation text-rose-600');
+
+        closeModal('modalReportMaint');
+        clearReportImagePreview();
+
+        renderMaintenanceView();
+        refreshDashboard();
+      } else {
+        showToast(res?.message || 'Gagal mengirim laporan.', 'error');
+      }
+    }, function(err) {
+      if (btnSubmit) btnSubmit.disabled = false;
+      if (btnText) btnText.innerText = 'Kirim Laporan';
+      showToast('Koneksi server gagal: ' + err.message, 'error');
+    });
+  }
+
+  function openResolveModal(maintId) {
+    const form = document.getElementById('formResolveMaint');
+    if (form) form.reset();
+
+    const m = DB.maintenance.find(function(item) { return item.maintenanceId === maintId; });
+    if (!m) return;
+
+    let targetTitle = 'Objek Tidak Terdaftar';
+    const ast = DB.assets.find(function(a) { return a.assetId === m.assetId; });
+    const rm = DB.rooms.find(function(r) { return r.ruangId === m.assetId; });
+    const bg = DB.buildings.find(function(b) { return b.gedungId === m.assetId; });
+
+    if (ast) {
+      targetTitle = ast.namaBarang + ' (' + ast.kodeBarang + ')';
+    } else if (rm) {
+      targetTitle = 'Ruangan: ' + rm.namaRuang + ' (' + rm.kodeRuang + ')';
+    } else if (bg) {
+      targetTitle = 'Gedung: ' + bg.namaGedung + ' (' + bg.kodeGedung + ')';
+    } else {
+      targetTitle = 'ID: ' + m.assetId;
+    }
+
+    document.getElementById('resolveMaintId').value = m.maintenanceId;
+    document.getElementById('resolveAssetId').value = m.assetId;
+    document.getElementById('resolveBarangName').innerText = targetTitle;
+    document.getElementById('resolveTanggalSelesai').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('resolveCatatan').value = '';
+
+    clearResolveImagePreview();
+    openModal('modalResolveMaint');
+  }
+
+  function submitResolveMaintenance() {
+    const maintId = document.getElementById('resolveMaintId').value;
+    const assetId = document.getElementById('resolveAssetId').value;
+    const tgl = document.getElementById('resolveTanggalSelesai').value;
+    const kondisi = document.getElementById('resolveKondisiSetelah').value;
+    const catatan = document.getElementById('resolveCatatan').value.trim();
+    const fotoBase64 = document.getElementById('resolveFormImageBase64')?.value || '';
+
+    if (!catatan) {
+      showToast('Harap masukkan catatan hasil perbaikan!', 'error');
+      return;
+    }
+
+    const btnSubmit = document.getElementById('btnSubmitResolveMaint');
+    const btnText = document.getElementById('btnSubmitResolveText');
+    if (btnSubmit) btnSubmit.disabled = true;
+    if (btnText) btnText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Menyimpan...';
+
+    const m = DB.maintenance.find(function(item) { return item.maintenanceId === maintId; });
+    if (m) {
+      m.status = 'Selesai';
+      m.tanggalSelesai = tgl;
+      m.kondisiSetelah = kondisi;
+      m.catatanPerbaikan = catatan;
+      m.updatedBy = DB.currentUser?.nama || 'Admin Sarpras';
+    }
+
+    const ast = DB.assets.find(function(a) { return a.assetId === assetId; });
+    const rm = DB.rooms.find(function(r) { return r.ruangId === assetId; });
+    const bg = DB.buildings.find(function(b) { return b.gedungId === assetId; });
+    if (ast) ast.kondisi = kondisi;
+    if (rm) rm.kondisi = kondisi;
+    if (bg) bg.kondisi = kondisi;
+
+    const maintPayload = {
+      maintenanceId: maintId,
+      assetId: assetId,
+      status: 'Selesai',
+      tanggalSelesai: tgl,
+      kondisiSetelah: kondisi,
+      catatanPerbaikan: catatan,
+      fotoPerbaikanBase64: fotoBase64,
+      updatedBy: DB.currentUser?.nama || 'Admin Sarpras'
+    };
+
+    callBackendApi('saveMaintenance', maintPayload, function(res) {
+      if (btnSubmit) btnSubmit.disabled = false;
+      if (btnText) btnText.innerText = 'Simpan Status Selesai';
+
+      if (res && res.success) {
+        if (m && res.fotoPerbaikanUrl) {
+          m.fotoPerbaikanUrl = res.fotoPerbaikanUrl;
+        }
+        DB.save();
+        DB.logActivity('Servis ' + (ast?.namaBarang || rm?.namaRuang || bg?.namaGedung || 'Sarpras') + ' diselesaikan', 'fa-circle-check text-emerald-600');
+        closeModal('modalResolveMaint');
+        clearResolveImagePreview();
+        showToast('Status perbaikan dan foto bukti berhasil disimpan!');
+        renderMaintenanceView();
+        refreshDashboard();
+      } else {
+        showToast(res?.message || 'Gagal menyimpan status selesai.', 'error');
+      }
+    }, function(err) {
+      if (btnSubmit) btnSubmit.disabled = false;
+      if (btnText) btnText.innerText = 'Simpan Status Selesai';
+      showToast('Koneksi server gagal: ' + err.message, 'error');
+    });
+  }
+
+  function switchProcureTab(tab) {
+    currentProcureTab = tab;
+    const pTab = document.getElementById('subtabProcure');
+    const dTab = document.getElementById('subtabDisposal');
+    const pContent = document.getElementById('tabContentProcure');
+    const dContent = document.getElementById('tabContentDisposal');
+
+    if (tab === 'procure') {
+      pTab.className = 'pb-3 text-xs font-bold dynamic-theme-text border-b-2 dynamic-theme-border flex items-center space-x-2';
+      dTab.className = 'pb-3 text-xs font-medium text-slate-500 hover:text-slate-800 flex items-center space-x-2';
+      pContent.classList.remove('hidden');
+      dContent.classList.add('hidden');
+    } else {
+      dTab.className = 'pb-3 text-xs font-bold dynamic-theme-text border-b-2 dynamic-theme-border flex items-center space-x-2';
+      pTab.className = 'pb-3 text-xs font-medium text-slate-500 hover:text-slate-800 flex items-center space-x-2';
+      dContent.classList.remove('hidden');
+      pContent.classList.add('hidden');
+    }
+  }
+
+  function renderProcurementAndDisposal() {
+    const procBody = document.getElementById('procurementsTableBody');
+    const procEmpty = document.getElementById('procureEmptyState');
+
+    if (DB.procurements.length === 0) {
+      procBody.innerHTML = '';
+      procEmpty.classList.remove('hidden');
+    } else {
+      procEmpty.classList.add('hidden');
+      procBody.innerHTML = DB.procurements.map(function(p) {
+        return '<tr class="hover:bg-cream-50/60 transition">' +
+          '<td class="py-3 px-4"><p class="font-bold text-slate-800">' + p.nomorPengadaan + '</p><p class="text-[11px] text-slate-400">' + p.tanggalPengadaan + '</p></td>' +
+          '<td class="py-3 px-4"><p class="font-semibold text-slate-800">' + p.namaBarang + '</p><p class="text-[11px] text-slate-500">' + (p.spesifikasi || '-') + '</p></td>' +
+          '<td class="py-3 px-4">' + p.jumlah + ' ' + (p.satuan || 'Unit') + '</td>' +
+          '<td class="py-3 px-4"><p class="font-bold text-slate-800">Rp ' + Number(p.totalHarga || 0).toLocaleString('id-ID') + '</p><p class="text-[10px] text-slate-400">@ Rp ' + Number(p.hargaSatuan || 0).toLocaleString('id-ID') + '</p></td>' +
+          '<td class="py-3 px-4"><p class="font-medium text-slate-800">' + (p.penyedia || '-') + '</p><p class="text-[10px] dynamic-theme-text">' + p.sumberDana + '</p></td>' +
+          '<td class="py-3 px-4 text-center">' +
+            (p.assetId ? '<span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-700 font-bold">Terdaftar di Aset</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-600 font-medium">Log Saja</span>') +
+          '</td>' +
+          '<td class="py-3 px-4 text-right">' +
+            (!p.assetId ? '<button onclick="convertProcurementToAsset(\'' + p.pengadaanId + '\')" class="role-action-btn px-2.5 py-1 rounded-lg dynamic-theme-btn text-white text-[10px] font-bold">Jadikan Aset</button>' : '-') +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    const dispBody = document.getElementById('disposalsTableBody');
+    const dispEmpty = document.getElementById('disposalEmptyState');
+
+    if (DB.disposals.length === 0) {
+      dispBody.innerHTML = '';
+      dispEmpty.classList.remove('hidden');
+    } else {
+      dispEmpty.classList.add('hidden');
+      dispBody.innerHTML = DB.disposals.map(function(d) {
+        const ast = DB.assets.find(function(a) { return a.assetId === d.assetId; }) || { namaBarang: 'Aset', kodeBarang: '-' };
+        return '<tr class="hover:bg-cream-50/60 transition">' +
+          '<td class="py-3 px-4 font-mono font-bold dynamic-theme-text">' + d.nomorBeritaAcara + '</td>' +
+          '<td class="py-3 px-4">' + d.tanggalPemusnahan + '</td>' +
+          '<td class="py-3 px-4"><p class="font-bold text-slate-800">' + ast.namaBarang + '</p><p class="text-[11px] font-mono text-slate-500">' + ast.kodeBarang + '</p></td>' +
+          '<td class="py-3 px-4"><p class="text-rose-700 font-medium">' + d.alasan + '</p><p class="text-[11px] text-slate-400">Metode: ' + d.metode + '</p></td>' +
+          '<td class="py-3 px-4">' + d.petugas + '</td>' +
+          '<td class="py-3 px-4 text-right">' +
+            '<button onclick="printDisposalLetter(\'' + d.disposalId + '\')" class="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 bg-cream-100 hover:bg-cream-200 text-xs font-semibold">' +
+              '<i class="fa-solid fa-print mr-1"></i>BA' +
+            '</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    applyRolePermissions();
+  }
+
+  function openProcurementModal() {
+    document.getElementById('formProcure').reset();
+    document.getElementById('procureId').value = '';
+    document.getElementById('procureNo').value = 'PO-' + new Date().getFullYear() + '-' + String(DB.procurements.length + 1).padStart(3, '0');
+    document.getElementById('procureDate').value = new Date().toISOString().slice(0, 10);
+    calcProcureTotal();
+    openModal('modalProcurement');
+  }
+
+  function calcProcureTotal() {
+    const q = Number(document.getElementById('procureQty').value) || 0;
+    const p = Number(document.getElementById('procurePrice').value) || 0;
+    const tot = q * p;
+    document.getElementById('procureTotalDisplay').innerText = 'Rp ' + tot.toLocaleString('id-ID');
+  }
+
+  function saveProcurement() {
+    const q = Number(document.getElementById('procureQty').value) || 1;
+    const p = Number(document.getElementById('procurePrice').value) || 0;
+
+    const procData = {
+      pengadaanId: 'PRC-' + Date.now(),
+      nomorPengadaan: document.getElementById('procureNo').value.trim(),
+      tanggalPengadaan: document.getElementById('procureDate').value,
+      namaBarang: document.getElementById('procureName').value.trim(),
+      kategori: document.getElementById('procureKategori').value,
+      spesifikasi: document.getElementById('procureSpek').value.trim(),
+      jumlah: q,
+      satuan: document.getElementById('procureUnit').value.trim() || 'Unit',
+      hargaSatuan: p,
+      totalHarga: q * p,
+      sumberDana: document.getElementById('procureDana').value.trim(),
+      penyedia: document.getElementById('procureVendor').value.trim(),
+      nomorDokumen: document.getElementById('procureDoc').value.trim(),
+      assetId: '',
+      keterangan: 'Pengadaan baru terdaftar'
+    };
+
+    DB.procurements.unshift(procData);
+    DB.save();
+    DB.logActivity('Pengadaan ' + procData.namaBarang + ' dicatat', 'fa-cart-plus text-cyan-600');
+    closeModal('modalProcurement');
+    showToast('Data pengadaan baru berhasil disimpan!');
+    renderProcurementAndDisposal();
+    refreshDashboard();
+
+    callBackendApi('saveProcurement', procData);
+  }
+
+  function convertProcurementToAsset(procId) {
+    const p = DB.procurements.find(function(item) { return item.pengadaanId === procId; });
+    if (!p) return;
+
+    openAssetModal();
+    document.getElementById('assetFormNama').value = p.namaBarang;
+    document.getElementById('assetFormKategori').value = p.kategori;
+    document.getElementById('assetFormSpesifikasi').value = p.spesifikasi || '';
+    document.getElementById('assetFormJumlah').value = p.jumlah;
+    document.getElementById('assetFormSatuan').value = p.satuan;
+    document.getElementById('assetFormHarga').value = p.hargaSatuan;
+    document.getElementById('assetFormSumberDana').value = p.sumberDana || 'BOS Reguler';
+    document.getElementById('assetFormKet').value = 'Berasal dari ' + p.nomorPengadaan;
+    p.assetId = 'PENDING_SAVE';
+  }
+
+  function openDisposalModal() {
+    const select = document.getElementById('dispAssetId');
+    select.innerHTML = DB.assets.filter(function(a) { return a.statusAset === 'Aktif'; }).map(function(a) {
+      return '<option value="' + a.assetId + '">' + a.namaBarang + ' (' + a.kodeBarang + ' - Kondisi: ' + a.kondisi + ')</option>';
+    }).join('');
+
+    document.getElementById('dispNoBA').value = 'BA-AFKIR/' + new Date().getFullYear() + '/' + String(DB.disposals.length + 1).padStart(3, '0');
+    document.getElementById('dispDate').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('dispPetugas').value = DB.currentUser?.nama || 'Tim Sarpras';
+    document.getElementById('dispKet').value = '';
+    openModal('modalDisposal');
+  }
+
+  function saveDisposal() {
+    const assetId = document.getElementById('dispAssetId').value;
+    const baNo = document.getElementById('dispNoBA').value.trim();
+
+    const dispData = {
+      disposalId: 'DSP-' + Date.now(),
+      assetId: assetId,
+      nomorBeritaAcara: baNo,
+      tanggalPemusnahan: document.getElementById('dispDate').value,
+      alasan: document.getElementById('dispAlasan').value,
+      metode: document.getElementById('dispMetode').value,
+      petugas: document.getElementById('dispPetugas').value.trim(),
+      keterangan: document.getElementById('dispKet').value.trim()
+    };
+
+    const ast = DB.assets.find(function(a) { return a.assetId === assetId; });
+    if (ast) {
+      ast.statusAset = 'Dimusnahkan';
+    }
+
+    DB.disposals.unshift(dispData);
+    DB.save();
+    DB.logActivity('Aset ' + (ast?.namaBarang || '') + ' dimusnahkan (' + baNo + ')', 'fa-trash-can text-rose-700');
+    closeModal('modalDisposal');
+    showToast('Berita acara pemusnahan aset berhasil diterbitkan!');
+    renderProcurementAndDisposal();
+    renderAssetsTable();
+    refreshDashboard();
+
+    callBackendApi('saveDisposal', dispData);
+  }
+
+  function printDisposalLetter(dispId) {
+    const d = DB.disposals.find(function(item) { return item.disposalId === dispId; });
+    if (!d) return;
+    const ast = DB.assets.find(function(a) { return a.assetId === d.assetId; }) || { namaBarang: '-', kodeBarang: '-' };
+
+    const w = window.open('', '_blank');
+    w.document.write(
+      '<html><head><title>Berita Acara Pemusnahan - ' + d.nomorBeritaAcara + '</title>' +
+      '<style>body{font-family:"Times New Roman",serif;padding:40px;color:#111;line-height:1.6;}.header{text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:24px;}h2{margin:0;font-size:18px;text-transform:uppercase;}p{margin:4px 0;font-size:13px;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{border:1px solid #333;padding:8px 12px;font-size:12px;text-align:left;}.sign{margin-top:50px;display:flex;justify-content:space-between;}.sign-box{width:45%;text-align:center;}</style></head>' +
+      '<body>' +
+        '<div class="header">' +
+          '<h2>' + (DB.settings.schoolName || 'SMP NEGERI 2 BANYUWANGI') + '</h2>' +
+          '<p>' + (DB.settings.schoolAddress || 'Jl. Ranggawuni No.41 Kebalenan Banyuwangi') + '</p>' +
+          '<p style="font-weight: bold; margin-top: 8px;">BERITA ACARA PENGHAPUSAN / PEMUSNAHAN BARANG INVENTARIS</p>' +
+          '<p>Nomor: ' + d.nomorBeritaAcara + '</p>' +
+        '</div>' +
+        '<p>Pada hari ini, tanggal <strong>' + d.tanggalPemusnahan + '</strong>, telah dilakukan tindakan pemusnahan/penghapusan terhadap barang inventaris sekolah dengan rincian:</p>' +
+        '<table>' +
+          '<tr><th>Nama Barang</th><td>' + ast.namaBarang + '</td></tr>' +
+          '<tr><th>Kode Barang</th><td>' + ast.kodeBarang + '</td></tr>' +
+          '<tr><th>Alasan Pemusnahan</th><td>' + d.alasan + '</td></tr>' +
+          '<tr><th>Metode Pemusnahan</th><td>' + d.metode + '</td></tr>' +
+          '<tr><th>Petugas Pelaksana</th><td>' + d.petugas + '</td></tr>' +
+          '<tr><th>Catatan Tambahan</th><td>' + (d.keterangan || '-') + '</td></tr>' +
+        '</table>' +
+        '<p>Demikian berita acara ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.</p>' +
+        '<div class="sign">' +
+          '<div class="sign-box"><p>Petugas Pelaksana,</p><br><br><br><p><strong>(' + d.petugas + ')</strong></p></div>' +
+          '<div class="sign-box"><p>Mengetahui,<br>Kepala Sekolah</p><br><br><p><strong>' + (DB.settings.principalName || 'Karyono, S.Pd.,M.T.') + '</strong><br>NIP. ' + (DB.settings.principalNIP || '-') + '</p></div>' +
+        '</div>' +
+        '<script>window.print();<\/script>' +
+      '</body></html>'
+    );
+    w.document.close();
+  }
+
+  function lookupCode(rawCode, customContentId, customPlaceholderId) {
+    const code = String(rawCode || '').trim().toUpperCase();
+    if (!code) return;
+
+    const isRespon = !document.getElementById('view-respon')?.classList.contains('hidden');
+    const contentId = customContentId || (isRespon ? 'scanResultContentRespon' : 'scanResultContent');
+    const placeholderId = customPlaceholderId || (isRespon ? 'scanResultPlaceholderRespon' : 'scanResultPlaceholder');
+
+    const placeholder = document.getElementById(placeholderId);
+    const content = document.getElementById(contentId);
+    if (placeholder) placeholder.classList.add('hidden');
+    if (content) {
+      content.classList.remove('hidden');
+      content.innerHTML = 
+        '<div class="p-8 text-center text-slate-500 text-xs">' +
+          '<i class="fa-solid fa-spinner fa-spin text-2xl dynamic-theme-text mb-2 block"></i>' +
+          '<span>Mengidentifikasi data entitas "' + code + '"...</span>' +
+        '</div>';
+    }
+
+    const bg = DB.buildings.find(function(b) {
+      return (b.kodeGedung && b.kodeGedung.toUpperCase() === code) || 
+             (b.gedungId && b.gedungId.toUpperCase() === code) ||
+             (b.namaGedung && b.namaGedung.trim().toUpperCase() === code);
+    });
+
+    if (bg) {
+      playScannerBeep();
+      renderGedungDetailScan(bg, false, contentId);
+      return;
+    }
+
+    const rm = DB.rooms.find(function(r) {
+      return (r.kodeRuang && r.kodeRuang.toUpperCase() === code) || 
+             (r.ruangId && r.ruangId.toUpperCase() === code) ||
+             (r.namaRuang && r.namaRuang.trim().toUpperCase() === code);
+    });
+
+    if (rm) {
+      playScannerBeep();
+      renderRuangDetailScan(rm, false, contentId);
+      return;
+    }
+
+    const ast = DB.assets.find(function(a) {
+      return (a.kodeBarang && a.kodeBarang.toUpperCase() === code) || 
+             (a.assetId && a.assetId.toUpperCase() === code);
+    });
+
+    if (ast) {
+      playScannerBeep();
+      renderAsetDetailScan(ast, false, contentId);
+      return;
+    }
+
+    callBackendApi('getDetailIdentifikasiQR', { code: code }, function(res) {
+      if (res && res.success && res.data) {
+        playScannerBeep();
+        if (res.tipe === 'gedung') renderGedungDetailScan(res.data, true, contentId);
+        else if (res.tipe === 'ruang') renderRuangDetailScan(res.data, true, contentId);
+        else if (res.tipe === 'aset') renderAsetDetailScan(res.data, true, contentId);
+      } else {
+        renderUnknownCode(code, contentId);
+      }
+    }, function() {
+      renderUnknownCode(code, contentId);
+    });
+  }
+
+  function renderGedungDetailScan(bg, fromServer, targetContentId) {
+    fromServer = fromServer || false;
+    targetContentId = targetContentId || 'scanResultContent';
+    const content = document.getElementById(targetContentId);
+    if (!content) return;
+    const gId = bg.gedungId || bg.idGedung;
+    
+    const roomsInGedung = fromServer && bg.daftarRuang ? bg.daftarRuang : DB.rooms.filter(function(r) { 
+      return String(r.gedungId).toUpperCase() === String(gId).toUpperCase(); 
+    });
+
+    const assetsInGedung = DB.assets.filter(function(a) {
+      return String(a.gedungId).toUpperCase() === String(gId).toUpperCase() && a.statusAset !== 'Dimusnahkan';
+    });
+
+    let countBaik = 0, countRusakRingan = 0, countRusakBerat = 0;
+    if (fromServer && bg.rekapKondisi) {
+      countBaik = bg.rekapKondisi.baik || 0;
+      countRusakRingan = bg.rekapKondisi.rusakRingan || 0;
+      countRusakBerat = bg.rekapKondisi.rusakBerat || 0;
+    } else {
+      assetsInGedung.forEach(function(a) {
+        const k = (a.kondisi || '').toLowerCase();
+        if (k.indexOf('rusak berat') !== -1) countRusakBerat++;
+        else if (k.indexOf('rusak') !== -1) countRusakRingan++;
+        else countBaik++;
+      });
+    }
+
+    const totalAset = countBaik + countRusakRingan + countRusakBerat;
+    const pBaik = totalAset > 0 ? Math.round((countBaik / totalAset) * 100) : 100;
+    const pRusak = totalAset > 0 ? Math.round((countRusakRingan / totalAset) * 100) : 0;
+    const pBerat = totalAset > 0 ? Math.round((countRusakBerat / totalAset) * 100) : 0;
+
+    let roomsHtml = '';
+    if (roomsInGedung.length === 0) {
+      roomsHtml = '<p class="col-span-full p-6 text-center text-xs text-slate-400 bg-cream-50 rounded-2xl border border-cream-200">Belum ada ruangan yang didaftarkan pada gedung ini.</p>';
+    } else {
+      roomsHtml = roomsInGedung.map(function(r) {
+        const asetDiRuang = DB.assets.filter(function(a) { return String(a.ruangId).toUpperCase() === String(r.ruangId).toUpperCase() && a.statusAset !== 'Dimusnahkan'; });
+        return '<div onclick="lookupCode(\'' + (r.kodeRuang || r.ruangId) + '\', \'' + targetContentId + '\')" ' +
+               'class="p-3 bg-white hover:bg-cream-50/80 rounded-2xl border border-cream-200 hover:border-slate-400 shadow-xs transition-all cursor-pointer group flex flex-col justify-between space-y-2">' +
+            '<div class="flex items-start justify-between gap-1">' +
+              '<div>' +
+                '<h5 class="font-bold text-slate-800 text-xs group-hover:text-magenta-700 transition">' + r.namaRuang + '</h5>' +
+                '<p class="text-[10px] font-mono text-slate-400">' + (r.kodeRuang || '-') + '</p>' +
+              '</div>' +
+              '<span class="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-cream-100 text-slate-700 shrink-0">Lt. ' + (r.lantai || 1) + '</span>' +
+            '</div>' +
+            '<div class="text-[10px] text-slate-500 space-y-0.5">' +
+              '<p><i class="fa-solid fa-users w-3.5 text-slate-400"></i>Kapasitas: <strong>' + (r.kapasitas || 0) + ' Org</strong></p>' +
+              '<p><i class="fa-solid fa-user-tie w-3.5 text-slate-400"></i>PJ: <strong>' + (r.penanggungJawab || '-') + '</strong></p>' +
+            '</div>' +
+            '<div class="pt-2 border-t border-cream-100 flex items-center justify-between text-[10px]">' +
+              '<span class="font-semibold text-emerald-600">' + asetDiRuang.length + ' Aset Terpasang</span>' +
+              '<span class="font-bold dynamic-theme-text flex items-center gap-1">Lihat <i class="fa-solid fa-arrow-right text-[8px]"></i></span>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    content.innerHTML = 
+      '<div class="space-y-4 animate-fadeIn">' +
+        '<div class="p-5 rounded-3xl bg-gradient-to-br from-purple-900/90 via-indigo-950 to-slate-900 text-white shadow-soft relative overflow-hidden">' +
+          '<div class="relative z-10">' +
+            '<div class="flex items-center justify-between gap-2">' +
+              '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/20 backdrop-blur-md text-purple-200 border border-white/20">' +
+                '<i class="fa-solid fa-school"></i>' +
+                '<span>Gedung Terverifikasi</span>' +
+              '</span>' +
+              '<span class="text-xs font-mono font-bold bg-purple-500/30 px-2.5 py-1 rounded-lg border border-purple-400/30">' + (bg.kodeGedung || '-') + '</span>' +
+            '</div>' +
+            '<h3 class="text-lg sm:text-xl font-black mt-2 leading-tight">' + bg.namaGedung + '</h3>' +
+            '<p class="text-xs text-purple-200/90 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">' +
+              '<span><i class="fa-solid fa-layer-group text-purple-300 mr-1"></i>' + (bg.jenisBangunan || 'Akademik') + '</span>' +
+              '<span><i class="fa-solid fa-ruler-combined text-purple-300 mr-1"></i>Luas: ' + (bg.luas || 0) + ' m²</span>' +
+              '<span><i class="fa-solid fa-stairs text-purple-300 mr-1"></i>' + (bg.jumlahLantai || 1) + ' Lantai</span>' +
+            '</p>' +
+            (bg.keterangan ? '<p class="text-[11px] text-white/70 mt-2 bg-white/10 p-2 rounded-xl backdrop-blur-xs leading-relaxed">' + bg.keterangan + '</p>' : '') +
+          '</div>' +
+          '<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-purple-500/20 rounded-full blur-xl pointer-events-none"></div>' +
+        '</div>' +
+
+        '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">' +
+          '<div class="p-3 bg-cream-50 rounded-2xl border border-cream-200">' +
+            '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Ruang</p>' +
+            '<h4 class="text-base font-extrabold text-slate-800 mt-0.5">' + roomsInGedung.length + '</h4>' +
+            '<span class="text-[9px] text-purple-700 font-semibold">Unit Ruangan</span>' +
+          '</div>' +
+          '<div class="p-3 bg-cream-50 rounded-2xl border border-cream-200">' +
+            '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Aset</p>' +
+            '<h4 class="text-base font-extrabold dynamic-theme-text mt-0.5">' + totalAset + '</h4>' +
+            '<span class="text-[9px] text-slate-500 font-semibold">Item Sarpras</span>' +
+          '</div>' +
+          '<div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200">' +
+            '<p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Kondisi Baik</p>' +
+            '<h4 class="text-base font-extrabold text-emerald-700 mt-0.5">' + countBaik + '</h4>' +
+            '<span class="text-[9px] text-emerald-600 font-semibold">' + pBaik + '% Sehat</span>' +
+          '</div>' +
+          '<div class="p-3 bg-rose-50/70 rounded-2xl border border-rose-200">' +
+            '<p class="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Perlu Servis</p>' +
+            '<h4 class="text-base font-extrabold text-rose-700 mt-0.5">' + (countRusakRingan + countRusakBerat) + '</h4>' +
+            '<span class="text-[9px] text-rose-600 font-semibold">Butuh Perbaikan</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="p-4 bg-white rounded-2xl border border-cream-200 shadow-xs space-y-2">' +
+          '<div class="flex items-center justify-between text-xs">' +
+            '<span class="font-bold text-slate-700 flex items-center gap-1.5">' +
+              '<i class="fa-solid fa-chart-pie dynamic-theme-text"></i>' +
+              '<span>Rasio Kondisi Aset di Gedung</span>' +
+            '</span>' +
+            '<span class="text-[11px] font-semibold text-emerald-600">' + pBaik + '% Kondisi Prima</span>' +
+          '</div>' +
+          '<div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">' +
+            '<div style="width: ' + pBaik + '%" class="bg-emerald-500 h-full transition-all duration-500" title="Baik: ' + countBaik + '"></div>' +
+            '<div style="width: ' + pRusak + '%" class="bg-amber-400 h-full transition-all duration-500" title="Rusak Ringan: ' + countRusakRingan + '"></div>' +
+            '<div style="width: ' + pBerat + '%" class="bg-rose-500 h-full transition-all duration-500" title="Rusak Berat: ' + countRusakBerat + '"></div>' +
+          '</div>' +
+          '<div class="flex flex-wrap items-center justify-between gap-2 text-[10.5px] text-slate-500 pt-1">' +
+            '<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Baik (' + countBaik + ')</span>' +
+            '<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>Rusak Ringan (' + countRusakRingan + ')</span>' +
+            '<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>Rusak Berat (' + countRusakBerat + ')</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="space-y-2.5 pt-2">' +
+          '<div class="flex items-center justify-between">' +
+            '<h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">' +
+              '<i class="fa-solid fa-door-open dynamic-theme-text"></i>' +
+              '<span>Daftar Ruangan di Gedung Ini (' + roomsInGedung.length + ')</span>' +
+            '</h4>' +
+            '<span class="text-[10px] text-slate-400">Klik kartu untuk detail ruang</span>' +
+          '</div>' +
+          '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1">' +
+            roomsHtml +
+          '</div>' +
+        '</div>' +
+
+        '<div class="flex flex-wrap gap-2 pt-3 border-t border-cream-200">' +
+          '<button onclick="openReportMaintenanceModal(\'' + (bg.gedungId || bg.idGedung) + '\', \'building\')" ' +
+                  'class="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm active:scale-95">' +
+            '<i class="fa-solid fa-triangle-exclamation"></i>' +
+            '<span>Laporkan Kerusakan (Upload Foto)</span>' +
+          '</button>' +
+          '<button onclick="editBuilding(\'' + (bg.gedungId || bg.idGedung) + '\')" class="role-action-btn py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition">' +
+            '<i class="fa-solid fa-pen mr-1"></i>Edit' +
+          '</button>' +
+          '<button onclick="showQRCode(\'' + (bg.gedungId || bg.idGedung) + '\', \'building\')" class="py-2 px-3 rounded-xl bg-cream-200 hover:bg-cream-300 text-slate-700 font-bold text-xs transition flex items-center gap-1.5">' +
+            '<i class="fa-solid fa-print mr-1"></i>Label' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    applyRolePermissions();
+  }
+
+  function renderRuangDetailScan(rm, fromServer, targetContentId) {
+    fromServer = fromServer || false;
+    targetContentId = targetContentId || 'scanResultContent';
+    const content = document.getElementById(targetContentId);
+    if (!content) return;
+    const rId = rm.ruangId || rm.idRuang;
+
+    const parentGedung = DB.buildings.find(function(b) { return String(b.gedungId).toUpperCase() === String(rm.gedungId).toUpperCase(); }) || { namaGedung: rm.namaGedung || '-' };
+    const assetsInRoom = fromServer && rm.daftarAset ? rm.daftarAset : DB.assets.filter(function(a) { return String(a.ruangId).toUpperCase() === String(rId).toUpperCase() && a.statusAset !== 'Dimusnahkan'; });
+
+    let countBaik = 0, countRusakRingan = 0, countRusakBerat = 0;
+    if (fromServer && rm.rekapKondisi) {
+      countBaik = rm.rekapKondisi.baik || 0;
+      countRusakRingan = rm.rekapKondisi.rusakRingan || 0;
+      countRusakBerat = rm.rekapKondisi.rusakBerat || 0;
+    } else {
+      assetsInRoom.forEach(function(a) {
+        const k = (a.kondisi || '').toLowerCase();
+        if (k.indexOf('rusak berat') !== -1) countRusakBerat++;
+        else if (k.indexOf('rusak') !== -1) countRusakRingan++;
+        else countBaik++;
+      });
+    }
+
+    const totalAset = countBaik + countRusakRingan + countRusakBerat;
+    const pBaik = totalAset > 0 ? Math.round((countBaik / totalAset) * 100) : 100;
+    const pRusak = totalAset > 0 ? Math.round((countRusakRingan / totalAset) * 100) : 0;
+    const pBerat = totalAset > 0 ? Math.round((countRusakBerat / totalAset) * 100) : 0;
+
+    let assetsListHtml = '';
+    if (assetsInRoom.length === 0) {
+      assetsListHtml = '<p class="p-6 text-center text-xs text-slate-400">Belum ada aset terdaftar yang berlokasi di ruangan ini.</p>';
+    } else {
+      assetsListHtml = assetsInRoom.map(function(a) {
+        let badgeKondisi = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        if ((a.kondisi || '').indexOf('Rusak Ringan') !== -1) badgeKondisi = 'bg-amber-50 text-amber-700 border-amber-200';
+        if ((a.kondisi || '').indexOf('Rusak Berat') !== -1) badgeKondisi = 'bg-rose-50 text-rose-700 border-rose-200';
+
+        return '<div class="p-3 flex items-center justify-between gap-2 hover:bg-cream-50/50 transition">' +
+            '<div class="min-w-0 flex-1">' +
+              '<div class="flex items-center gap-2">' +
+                '<p class="font-bold text-slate-800 text-xs truncate">' + (a.namaBarang || a.namaAset) + '</p>' +
+                '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold border ' + badgeKondisi + '">' + a.kondisi + '</span>' +
+              '</div>' +
+              '<p class="text-[10px] font-mono dynamic-theme-text mt-0.5">' + (a.kodeBarang || a.idAset) + ' • ' + (a.kategori || '-') + '</p>' +
+              (a.spesifikasi ? '<p class="text-[10px] text-slate-500 truncate mt-0.5">' + a.spesifikasi + '</p>' : '') +
+            '</div>' +
+            '<div class="flex items-center gap-1.5 shrink-0">' +
+              '<button onclick="lookupCode(\'' + (a.kodeBarang || a.idAset || a.assetId) + '\', \'' + targetContentId + '\')" ' +
+                      'class="px-2.5 py-1 rounded-lg bg-cream-100 hover:bg-cream-200 text-slate-700 text-[10px] font-bold transition">' +
+                'Detail' +
+              '</button>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    content.innerHTML = 
+      '<div class="space-y-4 animate-fadeIn">' +
+        '<div class="p-5 rounded-3xl bg-gradient-to-br from-cyan-900 via-sky-950 to-slate-900 text-white shadow-soft relative overflow-hidden">' +
+          '<div class="relative z-10">' +
+            '<div class="flex items-center justify-between gap-2">' +
+              '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/20 backdrop-blur-md text-cyan-200 border border-white/20">' +
+                '<i class="fa-solid fa-door-open"></i>' +
+                '<span>Ruangan Terverifikasi</span>' +
+              '</span>' +
+              '<span class="text-xs font-mono font-bold bg-cyan-500/30 px-2.5 py-1 rounded-lg border border-cyan-400/30">' + (rm.kodeRuang || '-') + '</span>' +
+            '</div>' +
+            '<h3 class="text-lg sm:text-xl font-black mt-2 leading-tight">' + rm.namaRuang + '</h3>' +
+            '<p class="text-xs text-cyan-200/90 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">' +
+              '<span><i class="fa-solid fa-school text-cyan-300 mr-1"></i>' + parentGedung.namaGedung + '</span>' +
+              '<span><i class="fa-solid fa-stairs text-cyan-300 mr-1"></i>Lantai ' + (rm.lantai || 1) + '</span>' +
+              '<span><i class="fa-solid fa-users text-cyan-300 mr-1"></i>Kapasitas: ' + (rm.kapasitas || 0) + ' Orang</span>' +
+            '</p>' +
+            '<div class="mt-2.5 flex flex-wrap gap-2 text-[11px] text-cyan-100">' +
+              '<span class="bg-white/10 px-2.5 py-1 rounded-lg"><strong>PJ:</strong> ' + (rm.penanggungJawab || rm.pic || '-') + '</span>' +
+              '<span class="bg-white/10 px-2.5 py-1 rounded-lg"><strong>Fungsi:</strong> ' + (rm.jenisRuang || 'Ruang Belajar') + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-cyan-500/20 rounded-full blur-xl pointer-events-none"></div>' +
+        '</div>' +
+
+        '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">' +
+          '<div class="p-3 bg-cream-50 rounded-2xl border border-cream-200">' +
+            '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Aset</p>' +
+            '<h4 class="text-base font-extrabold text-slate-800 mt-0.5">' + totalAset + '</h4>' +
+            '<span class="text-[9px] text-cyan-700 font-semibold">Item Sarpras</span>' +
+          '</div>' +
+          '<div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200">' +
+            '<p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Kondisi Baik</p>' +
+            '<h4 class="text-base font-extrabold text-emerald-700 mt-0.5">' + countBaik + '</h4>' +
+            '<span class="text-[9px] text-emerald-600 font-semibold">' + pBaik + '% Baik</span>' +
+          '</div>' +
+          '<div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200">' +
+            '<p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Rusak Ringan</p>' +
+            '<h4 class="text-base font-extrabold text-amber-700 mt-0.5">' + countRusakRingan + '</h4>' +
+            '<span class="text-[9px] text-amber-600 font-semibold">Bisa Dipakai</span>' +
+          '</div>' +
+          '<div class="p-3 bg-rose-50/70 rounded-2xl border border-rose-200">' +
+            '<p class="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Rusak Berat</p>' +
+            '<h4 class="text-base font-extrabold text-rose-700 mt-0.5">' + countRusakBerat + '</h4>' +
+            '<span class="text-[9px] text-rose-600 font-semibold">Perlu Servis</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="p-4 bg-white rounded-2xl border border-cream-200 shadow-xs space-y-2">' +
+          '<div class="flex items-center justify-between text-xs">' +
+            '<span class="font-bold text-slate-700 flex items-center gap-1.5">' +
+              '<i class="fa-solid fa-chart-column dynamic-theme-text"></i>' +
+              '<span>Status Kelaikan Aset di Ruangan Ini</span>' +
+            '</span>' +
+            '<span class="text-[11px] font-bold text-slate-700">' + totalAset + ' Total Unit</span>' +
+          '</div>' +
+          '<div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">' +
+            '<div style="width: ' + pBaik + '%" class="bg-emerald-500 h-full transition-all duration-500"></div>' +
+            '<div style="width: ' + pRusak + '%" class="bg-amber-400 h-full transition-all duration-500"></div>' +
+            '<div style="width: ' + pBerat + '%" class="bg-rose-500 h-full transition-all duration-500"></div>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="space-y-2.5 pt-2">' +
+          '<div class="flex items-center justify-between">' +
+            '<h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">' +
+              '<i class="fa-solid fa-boxes-stacked dynamic-theme-text"></i>' +
+              '<span>Inventaris Aset di Ruangan Ini (' + assetsInRoom.length + ')</span>' +
+            '</h4>' +
+            '<span class="text-[10px] text-slate-400">Rincian Fisik</span>' +
+          '</div>' +
+
+          '<div class="divide-y divide-cream-100 bg-white rounded-2xl border border-cream-200 shadow-xs max-h-72 overflow-y-auto">' +
+            assetsListHtml +
+          '</div>' +
+        '</div>' +
+
+        '<div class="flex flex-wrap gap-2 pt-3 border-t border-cream-200">' +
+          '<button onclick="openReportMaintenanceModal(\'' + (rm.ruangId || rm.idRuang) + '\', \'room\')" ' +
+                  'class="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm active:scale-95">' +
+            '<i class="fa-solid fa-triangle-exclamation"></i>' +
+            '<span>Laporkan Kerusakan (Upload Foto)</span>' +
+          '</button>' +
+          '<button onclick="editRoom(\'' + (rm.ruangId || rm.idRuang) + '\')" class="role-action-btn py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition">' +
+            '<i class="fa-solid fa-pen mr-1"></i>Edit' +
+          '</button>' +
+          '<button onclick="showQRCode(\'' + (rm.ruangId || rm.idRuang) + '\', \'room\')" class="py-2 px-3 rounded-xl bg-cream-200 hover:bg-cream-300 text-slate-700 font-bold text-xs transition flex items-center gap-1.5">' +
+            '<i class="fa-solid fa-print mr-1"></i>Label' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    applyRolePermissions();
+  }
+
+  function renderAsetDetailScan(ast, fromServer, targetContentId) {
+    fromServer = fromServer || false;
+    targetContentId = targetContentId || 'scanResultContent';
+    const content = document.getElementById(targetContentId);
+    if (!content) return;
+    const bg = DB.buildings.find(function(b) { return String(b.gedungId).toUpperCase() === String(ast.gedungId).toUpperCase(); }) || { namaGedung: ast.namaGedung || '-' };
+    const rm = DB.rooms.find(function(r) { return String(r.ruangId).toUpperCase() === String(ast.ruangId).toUpperCase(); }) || { namaRuang: ast.namaRuang || '-' };
+
+    let badgeKondisi = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    if ((ast.kondisi || '').indexOf('Rusak Ringan') !== -1) badgeKondisi = 'bg-amber-100 text-amber-800 border-amber-200';
+    if ((ast.kondisi || '').indexOf('Rusak Berat') !== -1) badgeKondisi = 'bg-rose-100 text-rose-800 border-rose-200';
+
+    content.innerHTML = 
+      '<div class="p-5 rounded-2xl bg-cream-50 border dynamic-theme-border space-y-3.5 animate-fadeIn">' +
+        '<div class="flex items-start justify-between gap-2">' +
+          '<div>' +
+            '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold dynamic-theme-bg-light dynamic-theme-text border dynamic-theme-border">Aset Sarpras Terverifikasi</span>' +
+            '<h3 class="font-extrabold text-slate-800 text-base mt-1.5">' + (ast.namaBarang || ast.namaAset) + '</h3>' +
+            '<p class="text-xs font-mono dynamic-theme-text font-bold">' + (ast.kodeBarang || ast.idAset) + '</p>' +
+          '</div>' +
+          '<span class="px-3 py-1 rounded-full text-xs font-bold border ' + badgeKondisi + '">' + ast.kondisi + '</span>' +
+        '</div>' +
+
+        '<div class="grid grid-cols-2 gap-2.5 text-xs text-slate-600 pt-2 border-t border-cream-200">' +
+          '<div><span class="text-slate-400 block text-[10px]">Lokasi Gedung:</span><span class="font-semibold text-slate-800">' + bg.namaGedung + '</span></div>' +
+          '<div><span class="text-slate-400 block text-[10px]">Ruangan:</span><span class="font-semibold text-slate-800">' + rm.namaRuang + '</span></div>' +
+          '<div><span class="text-slate-400 block text-[10px]">Jumlah:</span><span class="font-semibold text-slate-800">' + (ast.jumlah || 1) + ' ' + (ast.satuan || 'Unit') + '</span></div>' +
+          '<div><span class="text-slate-400 block text-[10px]">PJ Pengelola:</span><span class="font-semibold text-slate-800">' + (ast.penanggungJawab || '-') + '</span></div>' +
+        '</div>' +
+
+        (ast.spesifikasi ? '<p class="text-[11px] text-slate-600 bg-white p-2.5 rounded-xl border border-cream-200"><strong>Spesifikasi:</strong> ' + ast.spesifikasi + '</p>' : '') +
+
+        '<div class="flex flex-wrap gap-2 pt-2 border-t border-cream-200">' +
+          '<button onclick="openReportMaintenanceModal(\'' + (ast.assetId || ast.idAset) + '\', \'asset\')" class="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm active:scale-95">' +
+            '<i class="fa-solid fa-triangle-exclamation"></i><span>Laporkan Kerusakan (Upload Foto)</span>' +
+          '</button>' +
+          '<button onclick="editAsset(\'' + (ast.assetId || ast.idAset) + '\')" class="role-action-btn py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition">' +
+            '<i class="fa-solid fa-pen mr-1"></i>Edit' +
+          '</button>' +
+          '<button onclick="showQRCode(\'' + (ast.assetId || ast.idAset) + '\', \'asset\')" class="py-2 px-3 rounded-xl bg-cream-200 hover:bg-cream-300 text-slate-700 font-bold text-xs transition">' +
+            '<i class="fa-solid fa-print mr-1"></i>Label' +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    applyRolePermissions();
+  }
+
+  function renderUnknownCode(code, targetContentId) {
+    targetContentId = targetContentId || 'scanResultContent';
+    const content = document.getElementById(targetContentId);
+    if (!content) return;
+    content.innerHTML = 
+      '<div class="p-6 text-center text-rose-600 bg-rose-50 rounded-2xl border border-rose-200 space-y-2">' +
+        '<i class="fa-solid fa-circle-question text-3xl"></i>' +
+        '<h4 class="font-bold text-sm">Kode Tidak Dikenali</h4>' +
+        '<p class="text-xs text-rose-500">Kode "<strong>' + code + '</strong>" tidak terdaftar pada database Gedung, Ruang, ataupun Aset Sarpras.</p>' +
+      '</div>';
+  }
+
+  function showQRCode(id, type) {
+    let code = '';
+    let title = '';
+    let subtitle = '';
+
+    if (type === 'asset') {
+      const a = DB.assets.find(function(item) { return item.assetId === id || item.kodeBarang === id; });
+      if (!a) return;
+      code = a.kodeBarang;
+      title = a.namaBarang;
+      const bg = DB.buildings.find(function(b) { return b.gedungId === a.gedungId; })?.namaGedung || '';
+      const rm = DB.rooms.find(function(r) { return r.ruangId === a.ruangId; })?.namaRuang || '';
+      subtitle = bg + ' • ' + rm;
+    } else if (type === 'room') {
+      const r = DB.rooms.find(function(item) { return item.ruangId === id || item.kodeRuang === id; });
+      if (!r) return;
+      code = r.kodeRuang;
+      title = r.namaRuang;
+      const bg = DB.buildings.find(function(b) { return b.gedungId === r.gedungId; })?.namaGedung || '';
+      subtitle = bg + ' • Lantai ' + r.lantai;
+    } else if (type === 'building') {
+      const b = DB.buildings.find(function(item) { return item.gedungId === id || item.kodeGedung === id; });
+      if (!b) return;
+      code = b.kodeGedung;
+      title = b.namaGedung;
+      subtitle = b.jenisBangunan + ' • ' + b.lokasi;
+    }
+
+    document.getElementById('qrPrintSchool').innerText = DB.settings.schoolName || 'DIGITAS SARPRAS';
+    document.getElementById('qrPrintCode').innerText = code;
+    document.getElementById('qrPrintTitle').innerText = title;
+    document.getElementById('qrPrintSubtitle').innerText = subtitle;
+
+    const target = document.getElementById('qrCodeTarget');
+    target.innerHTML = '';
+    new QRCode(target, {
+      text: code,
+      width: 140,
+      height: 140,
+      colorDark: "#111827",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+
+    openModal('modalQR');
+  }
+
+  function initCetakQRFilters() {
+    const selKat = document.getElementById('filterCetakKategori');
+    const selGdg = document.getElementById('filterCetakGedung');
+    const selRng = document.getElementById('filterCetakRuang');
+
+    if (selKat) {
+      const kategoriMap = {};
+      DB.assets.forEach(function(a) {
+        if (a.kategori) kategoriMap[a.kategori.trim()] = true;
+      });
+      selKat.innerHTML = '<option value="">-- Semua Kategori --</option>' + 
+        Object.keys(kategoriMap).sort().map(function(k) { return '<option value="' + k + '">' + k + '</option>'; }).join('');
+    }
+
+    if (selGdg) {
+      selGdg.innerHTML = '<option value="">-- Semua Gedung --</option>' + 
+        DB.buildings.map(function(b) { return '<option value="' + b.gedungId + '">' + b.namaGedung + ' (' + b.kodeGedung + ')</option>'; }).join('');
+    }
+
+    if (selRng) {
+      populateCetakRuangDropdown('');
+    }
+  }
+
+  function populateCetakRuangDropdown(filterGedungId) {
+    const selRng = document.getElementById('filterCetakRuang');
+    if (!selRng) return;
+
+    let rooms = DB.rooms;
+    if (filterGedungId) {
+      rooms = DB.rooms.filter(function(r) { return String(r.gedungId).toUpperCase() === String(filterGedungId).toUpperCase(); });
+    }
+
+    selRng.innerHTML = '<option value="">-- Semua Ruang --</option>' + 
+      rooms.map(function(r) { return '<option value="' + r.ruangId + '">' + r.namaRuang + ' (' + r.kodeRuang + ')</option>'; }).join('');
+  }
+
+  function handleCetakTipeChange() {
+    const tipe = document.getElementById('filterCetakTipe').value;
+    const wrapKat = document.getElementById('wrapFilterCetakKategori');
+    const wrapGdg = document.getElementById('wrapFilterCetakGedung');
+    const wrapRng = document.getElementById('wrapFilterCetakRuang');
+
+    if (tipe === 'aset') {
+      if (wrapKat) wrapKat.style.display = 'block';
+      if (wrapGdg) wrapGdg.style.display = 'block';
+      if (wrapRng) wrapRng.style.display = 'block';
+    } else if (tipe === 'ruang') {
+      if (wrapKat) wrapKat.style.display = 'none';
+      if (wrapGdg) wrapGdg.style.display = 'block';
+      if (wrapRng) wrapRng.style.display = 'block';
+    } else if (tipe === 'gedung') {
+      if (wrapKat) wrapKat.style.display = 'none';
+      if (wrapGdg) wrapGdg.style.display = 'block';
+      if (wrapRng) wrapRng.style.display = 'none';
+    }
+
+    muatDataCetakQR();
+  }
+
+  function handleCetakGedungChange() {
+    const gdgId = document.getElementById('filterCetakGedung').value;
+    populateCetakRuangDropdown(gdgId);
+    muatDataCetakQR();
+  }
+
+  function handleCetakPaperChange(size) {
+    const area = document.getElementById('printableBatchArea');
+    if (!area) return;
+
+    if (size === 'folio') {
+      area.style.maxWidth = '215mm';
+      area.style.minHeight = '330mm';
+    } else {
+      area.style.maxWidth = '210mm';
+      area.style.minHeight = '297mm';
+    }
+  }
+
+  function resetFilterCetakQR() {
+    document.getElementById('filterCetakTipe').value = 'aset';
+    document.getElementById('filterCetakKategori').value = '';
+    document.getElementById('filterCetakGedung').value = '';
+    document.getElementById('filterCetakRuang').value = '';
+    document.getElementById('filterCetakKertas').value = 'a4';
+    handleCetakPaperChange('a4');
+    handleCetakTipeChange();
+  }
+
+  function muatDataCetakQR() {
+    const tipe = document.getElementById('filterCetakTipe')?.value || 'aset';
+    const kat = (document.getElementById('filterCetakKategori')?.value || '').toLowerCase().trim();
+    const gdg = (document.getElementById('filterCetakGedung')?.value || '').toLowerCase().trim();
+    const rng = (document.getElementById('filterCetakRuang')?.value || '').toLowerCase().trim();
+
+    const grid = document.getElementById('printSheetItemsGrid');
+    const countBadge = document.getElementById('labelCetakCount');
+    if (!grid) return;
+
+    grid.innerHTML = 
+      '<div class="col-span-full py-16 text-center text-slate-400 text-xs">' +
+        '<i class="fa-solid fa-spinner fa-spin text-2xl dynamic-theme-text mb-2 block"></i>' +
+        '<span>Memuat data stiker QR-Code...</span>' +
+      '</div>';
+
+    let items = [];
+
+    if (tipe === 'aset') {
+      items = DB.assets.filter(function(a) {
+        if (a.statusAset === 'Dimusnahkan') return false;
+        const matchKat = !kat || (a.kategori || '').toLowerCase().trim() === kat;
+        const matchGdg = !gdg || String(a.gedungId).toLowerCase().trim() === gdg;
+        const matchRng = !rng || String(a.ruangId).toLowerCase().trim() === rng;
+        return matchKat && matchGdg && matchRng;
+      }).map(function(a) {
+        const pGdg = DB.buildings.find(function(b) { return String(b.gedungId).toLowerCase() === String(a.gedungId).toLowerCase(); });
+        const pRng = DB.rooms.find(function(r) { return String(r.ruangId).toLowerCase() === String(a.ruangId).toLowerCase(); });
+        return {
+          id: a.assetId,
+          kode: a.kodeBarang,
+          nama: a.namaBarang,
+          sub: a.kategori + (a.spesifikasi ? ' • ' + a.spesifikasi : ''),
+          kondisi: a.kondisi || 'Baik',
+          lokasi: (pGdg ? pGdg.namaGedung : '-') + ' / ' + (pRng ? pRng.namaRuang : '-'),
+          qrValue: a.kodeBarang,
+          tipeLabel: 'ASET SARPRAS'
+        };
+      });
+    } else if (tipe === 'ruang') {
+      items = DB.rooms.filter(function(r) {
+        const matchGdg = !gdg || String(r.gedungId).toLowerCase().trim() === gdg;
+        const matchRng = !rng || String(r.ruangId).toLowerCase().trim() === rng;
+        return matchGdg && matchRng;
+      }).map(function(r) {
+        const pGdg = DB.buildings.find(function(b) { return String(b.gedungId).toLowerCase() === String(r.gedungId).toLowerCase(); });
+        return {
+          id: r.ruangId,
+          kode: r.kodeRuang,
+          nama: r.namaRuang,
+          sub: (r.jenisRuang || 'Ruang') + ' • Lantai ' + (r.lantai || 1) + ' (Kapasitas: ' + (r.kapasitas || 0) + ' Org)',
+          kondisi: r.kondisi || 'Baik',
+          lokasi: pGdg ? pGdg.namaGedung : '-',
+          qrValue: r.kodeRuang,
+          tipeLabel: 'LABEL RUANGAN'
+        };
+      });
+    } else if (tipe === 'gedung') {
+      items = DB.buildings.filter(function(b) {
+        return !gdg || String(b.gedungId).toLowerCase().trim() === gdg;
+      }).map(function(b) {
+        return {
+          id: b.gedungId,
+          kode: b.kodeGedung,
+          nama: b.namaGedung,
+          sub: (b.jenisBangunan || 'Akademik') + ' • ' + (b.jumlahLantai || 1) + ' Lantai (' + (b.luas || 0) + ' m²)',
+          kondisi: b.kondisi || 'Baik',
+          lokasi: b.lokasi || 'Kampus Sekolah',
+          qrValue: b.kodeGedung,
+          tipeLabel: 'LABEL BANGUNAN'
+        };
+      });
+    }
+
+    if (countBadge) countBadge.innerText = items.length;
+
+    if (items.length === 0) {
+      grid.innerHTML = 
+        '<div class="col-span-full py-16 text-center text-slate-400 text-xs">' +
+          '<i class="fa-solid fa-box-open text-3xl text-slate-300 mb-2 block"></i>' +
+          '<p class="font-bold text-slate-700">Tidak ada data yang sesuai filter</p>' +
+          '<p class="text-[11px] text-slate-400 mt-1">Coba sesuaikan pilihan filter kategori, gedung, atau ruang Anda.</p>' +
+        '</div>';
+      return;
+    }
+
+    grid.innerHTML = '';
+    const schoolName = DB.settings.schoolName || 'DIGITAS SARPRAS';
+
+    items.forEach(function(item, idx) {
+      const card = document.createElement('div');
+      card.className = 'border-2 border-dashed border-slate-300 rounded-xl p-3 bg-white text-slate-800 flex flex-col justify-between break-inside-avoid shadow-xs';
+      
+      const qrBoxId = 'qr_batch_' + idx;
+      card.innerHTML = 
+        '<div class="border-b border-slate-200 pb-1.5 mb-1.5 text-center">' +
+          '<p class="text-[9px] font-black uppercase tracking-wider text-slate-900 line-clamp-1">' + schoolName + '</p>' +
+          '<span class="text-[8px] font-bold text-slate-500 uppercase tracking-widest">' + item.tipeLabel + '</span>' +
+        '</div>' +
+        '<div class="flex items-center justify-center my-1">' +
+          '<div id="' + qrBoxId + '" class="p-1 bg-white border border-slate-200 rounded-lg flex items-center justify-center"></div>' +
+        '</div>' +
+        '<div class="text-center pt-1 border-t border-slate-100 mt-1 space-y-0.5">' +
+          '<p class="text-[11px] font-mono font-extrabold text-slate-900 tracking-wider">' + item.kode + '</p>' +
+          '<p class="text-[10px] font-bold text-slate-800 line-clamp-1 leading-tight">' + item.nama + '</p>' +
+          '<p class="text-[8.5px] text-slate-500 line-clamp-1 leading-tight">' + item.sub + '</p>' +
+          '<p class="text-[8px] font-semibold text-slate-600 line-clamp-1 leading-tight"><i class="fa-solid fa-location-dot mr-1"></i>' + item.lokasi + '</p>' +
+        '</div>';
+
+      grid.appendChild(card);
+
+      setTimeout(function() {
+        const qrEl = document.getElementById(qrBoxId);
+        if (qrEl) {
+          new QRCode(qrEl, {
+            text: item.qrValue || item.kode,
+            width: 80,
+            height: 80,
+            colorDark: "#0f172a",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        }
+      }, 20);
+    });
+  }
+
+  function renderBuildingsView() {
+    const container = document.getElementById('buildingsContainer');
+    container.innerHTML = DB.buildings.map(function(b) {
+      const roomsCount = DB.rooms.filter(function(r) { return r.gedungId === b.gedungId; }).length;
+      return '<div class="bg-white rounded-2xl border border-cream-200/80 p-5 shadow-soft flex flex-col justify-between space-y-3">' +
+        '<div>' +
+          '<div class="flex items-start justify-between">' +
+            '<div>' +
+              '<h3 class="font-bold text-slate-800 text-sm">' + b.namaGedung + '</h3>' +
+              '<p class="text-xs font-mono dynamic-theme-text font-bold">' + b.kodeGedung + '</p>' +
+            '</div>' +
+            '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cream-100 text-slate-700">' + b.kondisi + '</span>' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-2 text-xs text-slate-600 mt-3 pt-3 border-t border-cream-100">' +
+            '<div><span class="text-slate-400 block text-[10px]">Fungsi:</span>' + b.jenisBangunan + '</div>' +
+            '<div><span class="text-slate-400 block text-[10px]">Luas:</span>' + b.luas + ' m² (' + b.jumlahLantai + ' Lt)</div>' +
+            '<div><span class="text-slate-400 block text-[10px]">Tahun Bangun:</span>' + b.tahunDibangun + '</div>' +
+            '<div><span class="text-slate-400 block text-[10px]">Ruang Terhubung:</span><strong class="text-slate-800">' + roomsCount + ' Ruang</strong></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="pt-3 border-t border-cream-100 flex justify-end space-x-1.5">' +
+          '<button onclick="showQRCode(\'' + b.gedungId + '\', \'building\')" class="px-2.5 py-1 rounded-xl bg-cream-100 hover:bg-cream-200 text-xs font-bold text-slate-700"><i class="fa-solid fa-qrcode mr-1"></i>QR</button>' +
+          '<button onclick="editBuilding(\'' + b.gedungId + '\')" class="role-action-btn px-2.5 py-1 rounded-xl dynamic-theme-btn text-white text-xs font-bold"><i class="fa-solid fa-pen mr-1"></i>Edit</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    applyRolePermissions();
+  }
+
+  function openBuildingModal(buildingId) {
+    document.getElementById('formBuilding').reset();
+    if (buildingId) {
+      const b = DB.buildings.find(function(item) { return item.gedungId === buildingId; });
+      if (!b) return;
+      document.getElementById('modalBuildingTitle').innerText = 'Edit Data Gedung';
+      document.getElementById('buildingFormId').value = b.gedungId;
+      document.getElementById('buildingFormKode').value = b.kodeGedung;
+      document.getElementById('buildingFormNama').value = b.namaGedung;
+      document.getElementById('buildingFormJenis').value = b.jenisBangunan;
+      document.getElementById('buildingFormLokasi').value = b.lokasi;
+      document.getElementById('buildingFormLuas').value = b.luas;
+      document.getElementById('buildingFormTahun').value = b.tahunDibangun;
+      document.getElementById('buildingFormLantai').value = b.jumlahLantai;
+      document.getElementById('buildingFormKondisi').value = b.kondisi;
+    } else {
+      document.getElementById('modalBuildingTitle').innerText = 'Tambah Gedung Baru';
+      document.getElementById('buildingFormId').value = '';
+      document.getElementById('buildingFormKode').value = 'GDG-' + String.fromCharCode(65 + DB.buildings.length);
+    }
+    openModal('modalBuilding');
+  }
+
+  function editBuilding(buildingId) {
+    openBuildingModal(buildingId);
+  }
+
+  function saveBuilding() {
+    const id = document.getElementById('buildingFormId').value;
+    const bData = {
+      gedungId: id || ('GDG-' + Date.now()),
+      kodeGedung: document.getElementById('buildingFormKode').value.trim().toUpperCase(),
+      namaGedung: document.getElementById('buildingFormNama').value.trim(),
+      jenisBangunan: document.getElementById('buildingFormJenis').value.trim(),
+      lokasi: document.getElementById('buildingFormLokasi').value.trim(),
+      luas: Number(document.getElementById('buildingFormLuas').value),
+      tahunDibangun: Number(document.getElementById('buildingFormTahun').value),
+      jumlahLantai: Number(document.getElementById('buildingFormLantai').value),
+      kondisi: document.getElementById('buildingFormKondisi').value,
+      keterangan: 'Master data gedung sekolah'
+    };
+
+    if (id) {
+      const idx = DB.buildings.findIndex(function(b) { return b.gedungId === id; });
+      if (idx !== -1) DB.buildings[idx] = bData;
+    } else {
+      DB.buildings.push(bData);
+    }
+
+    DB.save();
+    DB.logActivity('Data gedung ' + bData.namaGedung + ' diperbarui', 'fa-school text-indigo-600');
+    closeModal('modalBuilding');
+    showToast('Data gedung berhasil disimpan!');
+    renderBuildingsView();
+    populateGedungFilterDropdown();
+    refreshDashboard();
+  }
+
+  function renderRoomsView(filterGedungId) {
+    const container = document.getElementById('roomsContainer');
+    const filterPills = document.getElementById('roomGedungFilterPills');
+
+    filterPills.innerHTML = '<button onclick="renderRoomsView()" class="px-3 py-1 rounded-xl text-xs font-bold transition ' + (!filterGedungId ? 'dynamic-theme-btn text-white' : 'bg-cream-100 text-slate-700') + '">Semua</button>' +
+      DB.buildings.map(function(b) {
+        const isSel = b.gedungId === filterGedungId;
+        return '<button onclick="renderRoomsView(\'' + b.gedungId + '\')" class="px-3 py-1 rounded-xl text-xs font-bold transition ' + (isSel ? 'dynamic-theme-btn text-white' : 'bg-cream-100 text-slate-700') + '">' + b.namaGedung + '</button>';
+      }).join('');
+
+    const filtered = filterGedungId ? DB.rooms.filter(function(r) { return r.gedungId === filterGedungId; }) : DB.rooms;
+
+    container.innerHTML = filtered.map(function(r) {
+      const bg = DB.buildings.find(function(b) { return b.gedungId === r.gedungId; }) || { namaGedung: '-' };
+      const assetsCount = DB.assets.filter(function(a) { return a.ruangId === r.ruangId && a.statusAset === 'Aktif'; }).length;
+
+      return '<div class="bg-white rounded-2xl border border-cream-200/80 p-5 shadow-soft flex flex-col justify-between space-y-3">' +
+        '<div>' +
+          '<div class="flex items-start justify-between">' +
+            '<div>' +
+              '<h3 class="font-bold text-slate-800 text-sm">' + r.namaRuang + '</h3>' +
+              '<p class="text-xs font-mono dynamic-theme-text font-bold">' + r.kodeRuang + '</p>' +
+            '</div>' +
+            '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cream-100 text-slate-700">' + r.kondisi + '</span>' +
+          '</div>' +
+          '<div class="grid grid-cols-2 gap-2 text-xs text-slate-600 mt-3 pt-3 border-t border-cream-100">' +
+            '<div><span class="text-slate-400 block text-[10px]">Gedung:</span>' + bg.namaGedung + '</div>' +
+            '<div><span class="text-slate-400 block text-[10px]">Lantai / Kapasitas:</span>Lt. ' + r.lantai + ' (' + r.kapasitas + ' Org)</div>' +
+            '<div><span class="text-slate-400 block text-[10px]">PJ Ruangan:</span>' + (r.penanggungJawab || '-') + '</div>' +
+            '<div><span class="text-slate-400 block text-[10px]">Total Aset:</span><strong class="text-slate-800">' + assetsCount + ' Unit</strong></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="pt-3 border-t border-cream-100 flex justify-end space-x-1.5">' +
+          '<button onclick="showQRCode(\'' + r.ruangId + '\', \'room\')" class="px-2.5 py-1 rounded-xl bg-cream-100 hover:bg-cream-200 text-xs font-bold text-slate-700"><i class="fa-solid fa-qrcode mr-1"></i>QR</button>' +
+          '<button onclick="editRoom(\'' + r.ruangId + '\')" class="role-action-btn px-2.5 py-1 rounded-xl dynamic-theme-btn text-white text-xs font-bold"><i class="fa-solid fa-pen mr-1"></i>Edit</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    applyRolePermissions();
+  }
+
+  function openRoomModal(roomId) {
+    document.getElementById('formRoom').reset();
+    const gdgSelect = document.getElementById('roomFormGedungId');
+    gdgSelect.innerHTML = DB.buildings.map(function(b) {
+      return '<option value="' + b.gedungId + '">' + b.namaGedung + ' (' + b.kodeGedung + ')</option>';
+    }).join('');
+
+    if (roomId) {
+      const r = DB.rooms.find(function(item) { return item.ruangId === roomId; });
+      if (!r) return;
+      document.getElementById('modalRoomTitle').innerText = 'Edit Data Ruang';
+      document.getElementById('roomFormId').value = r.ruangId;
+      document.getElementById('roomFormKode').value = r.kodeRuang;
+      document.getElementById('roomFormNama').value = r.namaRuang;
+      gdgSelect.value = r.gedungId;
+      document.getElementById('roomFormJenis').value = r.jenisRuang;
+      document.getElementById('roomFormKapasitas').value = r.kapasitas;
+      document.getElementById('roomFormLantai').value = r.lantai;
+      document.getElementById('roomFormKondisi').value = r.kondisi;
+      document.getElementById('roomFormPJ').value = r.penanggungJawab || '';
+    } else {
+      document.getElementById('modalRoomTitle').innerText = 'Tambah Ruang Baru';
+      document.getElementById('roomFormId').value = '';
+      document.getElementById('roomFormKode').value = 'R-' + String(DB.rooms.length + 1).padStart(2, '0');
+    }
+    openModal('modalRoom');
+  }
+
+  function editRoom(roomId) {
+    openRoomModal(roomId);
+  }
+
+  function saveRoom() {
+    const id = document.getElementById('roomFormId').value;
+    const rData = {
+      ruangId: id || ('RNG-' + Date.now()),
+      kodeRuang: document.getElementById('roomFormKode').value.trim().toUpperCase(),
+      namaRuang: document.getElementById('roomFormNama').value.trim(),
+      gedungId: document.getElementById('roomFormGedungId').value,
+      jenisRuang: document.getElementById('roomFormJenis').value,
+      kapasitas: Number(document.getElementById('roomFormKapasitas').value),
+      lantai: Number(document.getElementById('roomFormLantai').value),
+      kondisi: document.getElementById('roomFormKondisi').value,
+      penanggungJawab: document.getElementById('roomFormPJ').value.trim(),
+      keterangan: 'Master data ruang'
+    };
+
+    if (id) {
+      const idx = DB.rooms.findIndex(function(r) { return r.ruangId === id; });
+      if (idx !== -1) DB.rooms[idx] = rData;
+    } else {
+      DB.rooms.push(rData);
+    }
+
+    DB.save();
+    DB.logActivity('Data ruang ' + rData.namaRuang + ' disimpan', 'fa-door-open text-purple-600');
+    closeModal('modalRoom');
+    showToast('Data ruang berhasil disimpan!');
+    renderRoomsView();
+    refreshDashboard();
+  }
+
+  function renderUsersView() {
+    const tbody = document.getElementById('usersTableBody');
+    tbody.innerHTML = DB.users.map(function(u) {
+      return '<tr class="hover:bg-cream-50/60 transition">' +
+        '<td class="py-3 px-4 font-bold text-slate-800">' + u.nama + '</td>' +
+        '<td class="py-3 px-4 font-mono text-xs dynamic-theme-text">' + u.username + '</td>' +
+        '<td class="py-3 px-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cream-100 text-slate-700">' + u.role + '</span></td>' +
+        '<td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ' + (u.status === 'Aktif' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700') + '">' + u.status + '</span></td>' +
+        '<td class="py-3 px-4 text-right space-x-1">' +
+          '<button onclick="editUser(\'' + u.userId + '\')" class="p-1.5 rounded-lg text-slate-600 hover:text-slate-900"><i class="fa-solid fa-pen"></i></button>' +
+          (u.username !== 'admin' ? '<button onclick="deleteUserConfirm(\'' + u.userId + '\')" class="p-1.5 rounded-lg text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>' : '') +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function openUserModal(userId) {
+    document.getElementById('formUser').reset();
+    const helpPwd = document.getElementById('helpUserPassword');
+
+    if (userId) {
+      const u = DB.users.find(function(item) { return item.userId === userId; });
+      if (!u) return;
+      document.getElementById('modalUserTitle').innerText = 'Edit Akun Pengguna';
+      document.getElementById('userFormId').value = u.userId;
+      document.getElementById('userFormNama').value = u.nama;
+      document.getElementById('userFormUsername').value = u.username;
+      document.getElementById('userFormRole').value = u.role;
+      document.getElementById('userFormStatus').value = u.status;
+      document.getElementById('userFormPassword').required = false;
+      helpPwd.classList.remove('hidden');
+    } else {
+      document.getElementById('modalUserTitle').innerText = 'Tambah Akun Baru';
+      document.getElementById('userFormId').value = '';
+      document.getElementById('userFormPassword').required = true;
+      helpPwd.classList.add('hidden');
+    }
+    openModal('modalUser');
+  }
+
+  function editUser(userId) {
+    openUserModal(userId);
+  }
+
+  function saveUser() {
+    const id = document.getElementById('userFormId').value.trim();
+    const pwd = document.getElementById('userFormPassword').value;
+    const btnSubmit = document.getElementById('btnSaveUserSubmit');
+    const btnText = document.getElementById('btnSaveUserText');
+
+    const uData = {
+      userId: id,
+      nama: document.getElementById('userFormNama').value.trim(),
+      username: document.getElementById('userFormUsername').value.trim(),
+      password: pwd,
+      role: document.getElementById('userFormRole').value,
+      status: document.getElementById('userFormStatus').value
+    };
+
+    if (!uData.nama || !uData.username) {
+      showToast('Nama dan Username wajib diisi!', 'error');
+      return;
+    }
+
+    if (!id && !pwd) {
+      showToast('Password wajib diisi untuk akun baru!', 'error');
+      return;
+    }
+
+    if (btnSubmit) btnSubmit.disabled = true;
+    if (btnText) btnText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Menyimpan...';
+
+    callBackendApi('saveUser', uData, function(res) {
+      if (btnSubmit) btnSubmit.disabled = false;
+      if (btnText) btnText.innerText = 'Simpan Akun';
+
+      if (res && res.success) {
+        uData.userId = res.userId || id || ('USR-' + Date.now());
+        if (id) {
+          const idx = DB.users.findIndex(function(u) { return u.userId === id; });
+          if (idx !== -1) {
+            if (!pwd) uData.password = DB.users[idx].password;
+            DB.users[idx] = uData;
+          }
+        } else {
+          DB.users.push(uData);
+        }
+        DB.save();
+        renderUsersView();
+        closeModal('modalUser');
+        showToast(res.message || 'Akun pengguna berhasil disimpan ke Google Sheets!', 'success');
+        DB.logActivity('Akun ' + uData.nama + ' disimpan di database', 'fa-users-gear text-slate-700');
+      } else {
+        showToast(res?.error || res?.message || 'Gagal menyimpan akun ke Google Sheets', 'error');
+      }
+    }, function(err) {
+      if (btnSubmit) btnSubmit.disabled = false;
+      if (btnText) btnText.innerText = 'Simpan Akun';
+      showToast('Koneksi server gagal: ' + err.message, 'error');
+    });
+  }
+
+  function deleteUserConfirm(userId) {
+    const u = DB.users.find(function(item) { return item.userId === userId; });
+    if (!u) return;
+
+    promptConfirmation('Hapus Akun Pengguna', 'Hapus akun "' + u.nama + '"?', function() {
+      DB.users = DB.users.filter(function(item) { return item.userId !== userId; });
+      DB.save();
+      showToast('Akun telah dihapus.');
+      renderUsersView();
+
+      callBackendApi('deleteUser', { userId: userId });
+    });
+  }
+
+  function loadSettingsForm() {
+    document.getElementById('setAppName').value = DB.settings.appName || 'DIGITAS SARPRAS';
+    document.getElementById('setSchoolName').value = DB.settings.schoolName || 'SMP Negeri 2 Banyuwangi';
+    document.getElementById('setSchoolAddress').value = DB.settings.schoolAddress || '';
+    document.getElementById('setPrincipalName').value = DB.settings.principalName || '';
+    document.getElementById('setPrincipalNIP').value = DB.settings.principalNIP || '';
+
+    const gasInput = document.getElementById('setGasApiUrl');
+    if (gasInput) {
+      gasInput.value = localStorage.getItem('DS_GAS_API_URL') || GAS_API_URL || '';
+    }
+  }
+
+  function saveAppSettings() {
+    DB.settings.appName = document.getElementById('setAppName').value.trim();
+    DB.settings.schoolName = document.getElementById('setSchoolName').value.trim();
+    DB.settings.schoolAddress = document.getElementById('setSchoolAddress').value.trim();
+    DB.settings.principalName = document.getElementById('setPrincipalName').value.trim();
+    DB.settings.principalNIP = document.getElementById('setPrincipalNIP').value.trim();
+
+    const gasInput = document.getElementById('setGasApiUrl');
+    if (gasInput) {
+      const newUrl = gasInput.value.trim();
+      localStorage.setItem('DS_GAS_API_URL', newUrl);
+      GAS_API_URL = newUrl;
+    }
+
+    DB.save();
+    updateAppIdentityUI();
+    showToast('Pengaturan identitas sekolah & endpoint berhasil disimpan!');
+    syncSettingsToBackend(DB.settings);
+  }
+
+  function syncSettingsToBackend(obj) {
+    callBackendApi('saveSettings', obj);
+  }
+
+  function updateAppIdentityUI() {
+    document.getElementById('loginAppName').innerText = DB.settings.appName;
+    document.getElementById('headerAppName').innerText = DB.settings.appName;
+    document.getElementById('loginSchoolName').innerText = DB.settings.schoolName;
+    document.getElementById('headerSchoolName').innerText = DB.settings.schoolName;
+  }
+
+  function confirmResetData() {
+    promptConfirmation('Reset Data Uji Coba', 'Seluruh modifikasi data lokal akan dikembalikan ke data contoh bawaan sekolah. Lanjutkan?', function() {
+      localStorage.clear();
+      location.reload();
+    });
+  }
+
+  function syncDatabaseToSheets() {
+    const btn = document.getElementById('btnSyncDatabase');
+    const icon = document.getElementById('iconSyncDatabase');
+    const text = document.getElementById('textSyncDatabase');
+
+    icon.className = 'fa-solid fa-spinner fa-spin text-sm';
+    text.innerText = 'Menyinkronkan...';
+    btn.disabled = true;
+
+    const payload = {
+      assets: DB.assets,
+      buildings: DB.buildings,
+      rooms: DB.rooms,
+      maintenance: DB.maintenance,
+      procurements: DB.procurements,
+      disposals: DB.disposals,
+      settings: DB.settings
+    };
+
+    callBackendApi('syncAllData', payload, function(res) {
+      icon.className = 'fa-solid fa-cloud-arrow-up text-sm';
+      text.innerText = 'Sinkron Database';
+      btn.disabled = false;
+
+      if (res && res.success) {
+        showToast(res.message || 'Sinkronisasi berhasil!', 'success');
+        DB.logActivity('Sinkronisasi massal data ke Google Sheets', 'fa-cloud-arrow-up text-emerald-600');
+      } else {
+        showToast(res?.error || 'Gagal sinkron data.', 'error');
+      }
+    }, function(err) {
+      icon.className = 'fa-solid fa-cloud-arrow-up text-sm';
+      text.innerText = 'Sinkron Database';
+      btn.disabled = false;
+      showToast('Koneksi server gagal: ' + err.message, 'error');
+    });
+  }
+
+  function initAppSession() {
+    const header = document.getElementById('mainAppHeader');
+    const bottomNav = document.getElementById('mainAppBottomNav');
+    if (header) header.classList.remove('hidden');
+    if (bottomNav) bottomNav.classList.remove('hidden');
+
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+
+    const u = DB.currentUser || { nama: 'Administrator', username: 'admin', role: 'Admin' };
+    document.getElementById('userNameDisplay').innerText = u.nama;
+    document.getElementById('userRoleDisplay').innerText = u.role;
+    document.getElementById('dropdownUserName').innerText = u.nama;
+    document.getElementById('dropdownUserEmail').innerText = u.username + '@sarpras.sch.id';
+
+    const initials = u.nama.split(' ').map(function(n) { return n[0]; }).slice(0, 2).join('').toUpperCase() || 'AD';
+    document.getElementById('userAvatarText').innerText = initials;
+
+    applyRolePermissions();
+    updateAppIdentityUI();
+    populateGedungFilterDropdown();
+
+    const isGuest = u.role === 'Guest' || u.role === 'Guest/Tamu' || u.role === 'Tamu';
+    if (isGuest) {
+      navigateTo('respon');
+    } else {
+      navigateTo('dashboard');
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    applySystemTheme(DB.settings.selectedTheme || 'magenta-rose', DB.settings.selectedFont || 'Inter');
+    updateAppIdentityUI();
+
+    if (DB.currentUser) {
+      initAppSession();
+    }
+
+    callBackendApi('getInitialData', {}, function(res) {
+      if (res && res.success) {
+        if (res.assets && res.assets.length > 0) DB.assets = res.assets;
+        if (res.buildings && res.buildings.length > 0) DB.buildings = res.buildings;
+        if (res.rooms && res.rooms.length > 0) DB.rooms = res.rooms;
+        if (res.users && res.users.length > 0) DB.users = res.users;
+        if (res.maintenance && res.maintenance.length > 0) DB.maintenance = res.maintenance;
+        if (res.procurements && res.procurements.length > 0) DB.procurements = res.procurements;
+        if (res.disposals && res.disposals.length > 0) DB.disposals = res.disposals;
+        if (res.settings && res.settings.length > 0) {
+          res.settings.forEach(function(s) {
+            DB.settings[s.settingKey] = s.settingValue;
+          });
+          applySystemTheme(DB.settings.selectedTheme || 'magenta-rose', DB.settings.selectedFont || 'Inter');
+          updateAppIdentityUI();
+        }
+        DB.save();
+        if (DB.currentUser) {
+          const uRole = DB.currentUser.role;
+          if (uRole === 'Guest' || uRole === 'Guest/Tamu' || uRole === 'Tamu') {
+            navigateTo('respon');
+          } else {
+            refreshDashboard();
+          }
+        }
+      }
+    });
+  });
+</script>
