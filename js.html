@@ -209,7 +209,8 @@
     { id: 'ACT-1', text: 'Pencatatan aset PC All-in-One HP', time: 'Hari ini, 08:30', icon: 'fa-plus text-emerald-600' }
   ];
 
-  let GAS_API_URL = localStorage.getItem('DS_GAS_API_URL') || '';
+  const DEFAULT_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzteE3XClLNY1_HZX4ocg9kk2LJJo7MSaXwc8JFz5baahxuRuAZCRKElw-He_Di3B1B6Q/exec';
+  let GAS_API_URL = localStorage.getItem('DS_GAS_API_URL') || DEFAULT_GAS_API_URL;
 
   async function callBackendApi(action, payload, onSuccess, onFailure) {
     payload = payload || {};
@@ -235,7 +236,7 @@
       return;
     }
 
-    const targetUrl = GAS_API_URL || localStorage.getItem('DS_GAS_API_URL');
+    const targetUrl = GAS_API_URL || localStorage.getItem('DS_GAS_API_URL') || DEFAULT_GAS_API_URL;
     if (!targetUrl) {
       console.warn('[ZettBOT Hub] URL Backend Google Apps Script belum disetel di menu Pengaturan.');
       if (onFailure) onFailure(new Error('URL Web App Google Apps Script belum dikonfigurasi di Pengaturan'));
@@ -2974,7 +2975,7 @@
 
     const gasInput = document.getElementById('setGasApiUrl');
     if (gasInput) {
-      gasInput.value = localStorage.getItem('DS_GAS_API_URL') || GAS_API_URL || '';
+      gasInput.value = localStorage.getItem('DS_GAS_API_URL') || GAS_API_URL || DEFAULT_GAS_API_URL;
     }
   }
 
@@ -2987,7 +2988,7 @@
 
     const gasInput = document.getElementById('setGasApiUrl');
     if (gasInput) {
-      const newUrl = gasInput.value.trim();
+      const newUrl = gasInput.value.trim() || DEFAULT_GAS_API_URL;
       localStorage.setItem('DS_GAS_API_URL', newUrl);
       GAS_API_URL = newUrl;
     }
