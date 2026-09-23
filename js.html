@@ -211,15 +211,10 @@
 
   let GAS_API_URL = localStorage.getItem('DS_GAS_API_URL') || '';
 
-  /**
-   * Universal Bridge API: Menghubungkan Frontend ke Google Apps Script
-   * Mendukung mode GAS Internal (google.script.run) dan mode GitHub Pages (fetch REST API)
-   */
   async function callBackendApi(action, payload, onSuccess, onFailure) {
     payload = payload || {};
     payload.action = action;
 
-    // 1. Jika dijalankan di dalam container Google Apps Script
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       const runner = google.script.run
         .withSuccessHandler(function(res) { if (onSuccess) onSuccess(res); })
@@ -240,7 +235,6 @@
       return;
     }
 
-    // 2. Jika dijalankan di GitHub Pages / Static Hosting
     const targetUrl = GAS_API_URL || localStorage.getItem('DS_GAS_API_URL');
     if (!targetUrl) {
       console.warn('[ZettBOT Hub] URL Backend Google Apps Script belum disetel di menu Pengaturan.');
@@ -249,7 +243,6 @@
     }
 
     try {
-      // Mengirimkan text/plain murni untuk mencegah CORS Preflight OPTIONS di server Apps Script
       const response = await fetch(targetUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -364,19 +357,62 @@
       if (btnText) btnText.innerText = 'Menyalakan Kamera...';
       if (btn) btn.disabled = true;
 
-      if (!responCameraScanner) {
-        responCameraScanner = new Html5Qrcode('qr-reader-respon');
-      }
+      // LANGKAH KRUSIAL 1: Tampilkan wadah SEBELUM engine scanner mulai mengukur dimensi video
+      if (placeholderEl) placeholderEl.classList.add('hidden');
+      readerEl.classList.remove('hidden');
+      readerEl.style.display = 'flex';
 
-      const qrBoxSize = Math.min(240, Math.floor(window.innerWidth * 0.65));
+      // Bersihkan instans kamera lama bila sebelumnya masih tersisa
+      if (responCameraScanner) {
+        try {
+          await responCameraScanner.stop();
+          await responCameraScanner.clear();
+        } catch (e) {}
+        responCameraScanner = null;
+      }
+      readerEl.innerHTML = '';
+
+      responCameraScanner = new Html5Qrcode('qr-reader-respon');
+
+      // LANGKAH KRUSIAL 2: Gunakan fungsi qrbox dinamis agar proporsional di HP maupun Laptop
+      const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
+        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+        const qrboxSize = Math.max(160, Math.floor(minEdge * 0.72));
+        return {
+          width: qrboxSize,
+          height: qrboxSize
+        };
+      };
+
       const config = {
         fps: 15,
-        qrbox: { width: qrBoxSize, height: qrBoxSize },
+        qrbox: qrboxFunction,
         aspectRatio: 1.0
       };
 
+      // LANGKAH KRUSIAL 3: Enumerasi perangkat kamera fisik (deteksi lensa belakang di smartphone)
+      let cameraConfig = { facingMode: "environment" };
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        if (devices && devices.length > 0) {
+          const backCam = devices.find(function(d) {
+            return /back|rear|environment|belakang|main/i.test(d.label);
+          });
+          if (backCam) {
+            cameraConfig = backCam.id;
+          } else if (devices.length > 1) {
+            // Pada smartphone kamera belakang biasanya terletak di urutan akhir
+            cameraConfig = devices[devices.length - 1].id;
+          } else {
+            cameraConfig = devices[0].id;
+          }
+        }
+      } catch (camErr) {
+        console.warn('Enum kamera opsional:', camErr);
+      }
+
       await responCameraScanner.start(
-        { facingMode: "environment" },
+        cameraConfig,
         config,
         function onScanSuccess(decodedText) {
           playScannerBeep();
@@ -388,8 +424,6 @@
       );
 
       isResponCameraRunning = true;
-      if (placeholderEl) placeholderEl.classList.add('hidden');
-      readerEl.classList.remove('hidden');
 
       if (btn) {
         btn.disabled = false;
@@ -400,18 +434,14 @@
 
     } catch (err) {
       console.error('Kamera error:', err);
-      isResponCameraRunning = false;
-      if (placeholderEl) placeholderEl.classList.remove('hidden');
-      readerEl.classList.add('hidden');
+      await stopCameraScannerRespon();
 
-      if (btn) {
-        btn.disabled = false;
-        btn.classList.add('dynamic-theme-btn');
-        btn.classList.remove('bg-slate-700', 'hover:bg-slate-800');
+      let msg = 'Gagal menampilkan video kamera. ';
+      if (err && (err.name === 'NotAllowedError' || String(err).includes('Permission'))) {
+        msg += 'Izin akses kamera ditolak oleh browser. Pastikan izin kamera aktif atau gunakan opsi "Pindai dari Foto / Galeri".';
+      } else {
+        msg += 'Pastikan izin kamera aktif, atau gunakan tombol "Pilih Foto dari Galeri".';
       }
-      if (btnText) btnText.innerText = 'Nyalakan Kamera';
-
-      let msg = 'Izin kamera dibutuhkan. Pastikan Anda telah mengizinkan browser mengakses kamera.';
       showToast(msg, 'error');
     }
   }
@@ -433,7 +463,11 @@
     responCameraScanner = null;
     isResponCameraRunning = false;
 
-    if (readerEl) readerEl.classList.add('hidden');
+    if (readerEl) {
+      readerEl.classList.add('hidden');
+      readerEl.style.display = 'none';
+      readerEl.innerHTML = '';
+    }
     if (placeholderEl) placeholderEl.classList.remove('hidden');
 
     if (btn) {
