@@ -209,13 +209,17 @@
     { id: 'ACT-1', text: 'Pencatatan aset PC All-in-One HP', time: 'Hari ini, 08:30', icon: 'fa-plus text-emerald-600' }
   ];
 
-  const DEFAULT_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzteE3XClLNY1_HZX4ocg9kk2LJJo7MSaXwc8JFz5baahxuRuAZCRKElw-He_Di3B1B6Q/exec';
-  let GAS_API_URL = localStorage.getItem('DS_GAS_API_URL') || DEFAULT_GAS_API_URL;
+  let GAS_API_URL = localStorage.getItem('DS_GAS_API_URL') || '';
 
+  /**
+   * Universal Bridge API: Menghubungkan Frontend ke Google Apps Script
+   * Mendukung mode GAS Internal (google.script.run) dan mode GitHub Pages (fetch REST API)
+   */
   async function callBackendApi(action, payload, onSuccess, onFailure) {
     payload = payload || {};
     payload.action = action;
 
+    // 1. Jika dijalankan di dalam container Google Apps Script
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       const runner = google.script.run
         .withSuccessHandler(function(res) { if (onSuccess) onSuccess(res); })
@@ -236,7 +240,8 @@
       return;
     }
 
-    const targetUrl = GAS_API_URL || localStorage.getItem('DS_GAS_API_URL') || DEFAULT_GAS_API_URL;
+    // 2. Jika dijalankan di GitHub Pages / Static Hosting
+    const targetUrl = GAS_API_URL || localStorage.getItem('DS_GAS_API_URL');
     if (!targetUrl) {
       console.warn('[ZettBOT Hub] URL Backend Google Apps Script belum disetel di menu Pengaturan.');
       if (onFailure) onFailure(new Error('URL Web App Google Apps Script belum dikonfigurasi di Pengaturan'));
@@ -244,6 +249,7 @@
     }
 
     try {
+      // Mengirimkan text/plain murni untuk mencegah CORS Preflight OPTIONS di server Apps Script
       const response = await fetch(targetUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -358,62 +364,19 @@
       if (btnText) btnText.innerText = 'Menyalakan Kamera...';
       if (btn) btn.disabled = true;
 
-      // LANGKAH KRUSIAL 1: Tampilkan wadah SEBELUM engine scanner mulai mengukur dimensi video
-      if (placeholderEl) placeholderEl.classList.add('hidden');
-      readerEl.classList.remove('hidden');
-      readerEl.style.display = 'flex';
-
-      // Bersihkan instans kamera lama bila sebelumnya masih tersisa
-      if (responCameraScanner) {
-        try {
-          await responCameraScanner.stop();
-          await responCameraScanner.clear();
-        } catch (e) {}
-        responCameraScanner = null;
+      if (!responCameraScanner) {
+        responCameraScanner = new Html5Qrcode('qr-reader-respon');
       }
-      readerEl.innerHTML = '';
 
-      responCameraScanner = new Html5Qrcode('qr-reader-respon');
-
-      // LANGKAH KRUSIAL 2: Gunakan fungsi qrbox dinamis agar proporsional di HP maupun Laptop
-      const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
-        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-        const qrboxSize = Math.max(160, Math.floor(minEdge * 0.72));
-        return {
-          width: qrboxSize,
-          height: qrboxSize
-        };
-      };
-
+      const qrBoxSize = Math.min(240, Math.floor(window.innerWidth * 0.65));
       const config = {
         fps: 15,
-        qrbox: qrboxFunction,
+        qrbox: { width: qrBoxSize, height: qrBoxSize },
         aspectRatio: 1.0
       };
 
-      // LANGKAH KRUSIAL 3: Enumerasi perangkat kamera fisik (deteksi lensa belakang di smartphone)
-      let cameraConfig = { facingMode: "environment" };
-      try {
-        const devices = await Html5Qrcode.getCameras();
-        if (devices && devices.length > 0) {
-          const backCam = devices.find(function(d) {
-            return /back|rear|environment|belakang|main/i.test(d.label);
-          });
-          if (backCam) {
-            cameraConfig = backCam.id;
-          } else if (devices.length > 1) {
-            // Pada smartphone kamera belakang biasanya terletak di urutan akhir
-            cameraConfig = devices[devices.length - 1].id;
-          } else {
-            cameraConfig = devices[0].id;
-          }
-        }
-      } catch (camErr) {
-        console.warn('Enum kamera opsional:', camErr);
-      }
-
       await responCameraScanner.start(
-        cameraConfig,
+        { facingMode: "environment" },
         config,
         function onScanSuccess(decodedText) {
           playScannerBeep();
@@ -425,6 +388,8 @@
       );
 
       isResponCameraRunning = true;
+      if (placeholderEl) placeholderEl.classList.add('hidden');
+      readerEl.classList.remove('hidden');
 
       if (btn) {
         btn.disabled = false;
@@ -435,14 +400,18 @@
 
     } catch (err) {
       console.error('Kamera error:', err);
-      await stopCameraScannerRespon();
+      isResponCameraRunning = false;
+      if (placeholderEl) placeholderEl.classList.remove('hidden');
+      readerEl.classList.add('hidden');
 
-      let msg = 'Gagal menampilkan video kamera. ';
-      if (err && (err.name === 'NotAllowedError' || String(err).includes('Permission'))) {
-        msg += 'Izin akses kamera ditolak oleh browser. Pastikan izin kamera aktif atau gunakan opsi "Pindai dari Foto / Galeri".';
-      } else {
-        msg += 'Pastikan izin kamera aktif, atau gunakan tombol "Pilih Foto dari Galeri".';
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.add('dynamic-theme-btn');
+        btn.classList.remove('bg-slate-700', 'hover:bg-slate-800');
       }
+      if (btnText) btnText.innerText = 'Nyalakan Kamera';
+
+      let msg = 'Izin kamera dibutuhkan. Pastikan Anda telah mengizinkan browser mengakses kamera.';
       showToast(msg, 'error');
     }
   }
@@ -464,11 +433,7 @@
     responCameraScanner = null;
     isResponCameraRunning = false;
 
-    if (readerEl) {
-      readerEl.classList.add('hidden');
-      readerEl.style.display = 'none';
-      readerEl.innerHTML = '';
-    }
+    if (readerEl) readerEl.classList.add('hidden');
     if (placeholderEl) placeholderEl.classList.remove('hidden');
 
     if (btn) {
@@ -1962,13 +1927,38 @@
     w.document.close();
   }
 
-  function lookupCode(rawCode, customContentId, customPlaceholderId) {
+  let scanHistoryMain = [];
+  let scanHistoryRespon = [];
+
+  function drillDownScan(newCode, targetContentId) {
+    const isRespon = targetContentId === 'scanResultContentRespon';
+    const historyStack = isRespon ? scanHistoryRespon : scanHistoryMain;
+    historyStack.push(newCode);
+    lookupCode(newCode, targetContentId, null, true);
+  }
+
+  function goBackScan(targetContentId) {
+    const isRespon = targetContentId === 'scanResultContentRespon';
+    const historyStack = isRespon ? scanHistoryRespon : scanHistoryMain;
+    historyStack.pop();
+    if (historyStack.length > 0) {
+      const prevCode = historyStack[historyStack.length - 1];
+      lookupCode(prevCode, targetContentId, null, true);
+    }
+  }
+
+  function lookupCode(rawCode, customContentId, customPlaceholderId, skipHistory) {
     const code = String(rawCode || '').trim().toUpperCase();
     if (!code) return;
 
     const isRespon = !document.getElementById('view-respon')?.classList.contains('hidden');
     const contentId = customContentId || (isRespon ? 'scanResultContentRespon' : 'scanResultContent');
     const placeholderId = customPlaceholderId || (isRespon ? 'scanResultPlaceholderRespon' : 'scanResultPlaceholder');
+
+    if (!skipHistory) {
+      if (isRespon) scanHistoryRespon = [code];
+      else scanHistoryMain = [code];
+    }
 
     const placeholder = document.getElementById(placeholderId);
     const content = document.getElementById(contentId);
@@ -2038,6 +2028,10 @@
     if (!content) return;
     const gId = bg.gedungId || bg.idGedung;
     
+    const isRespon = targetContentId === 'scanResultContentRespon';
+    const historyStack = isRespon ? scanHistoryRespon : scanHistoryMain;
+    const backBtnHtml = historyStack.length > 1 ? '<button onclick="goBackScan(\'' + targetContentId + '\')" class="mb-3 px-3 py-1.5 rounded-xl bg-cream-100 hover:bg-cream-200 text-slate-700 text-[11px] font-bold transition flex items-center w-fit shadow-xs"><i class="fa-solid fa-arrow-left mr-1.5"></i>Kembali</button>' : '';
+
     const roomsInGedung = fromServer && bg.daftarRuang ? bg.daftarRuang : DB.rooms.filter(function(r) { 
       return String(r.gedungId).toUpperCase() === String(gId).toUpperCase(); 
     });
@@ -2071,7 +2065,7 @@
     } else {
       roomsHtml = roomsInGedung.map(function(r) {
         const asetDiRuang = DB.assets.filter(function(a) { return String(a.ruangId).toUpperCase() === String(r.ruangId).toUpperCase() && a.statusAset !== 'Dimusnahkan'; });
-        return '<div onclick="lookupCode(\'' + (r.kodeRuang || r.ruangId) + '\', \'' + targetContentId + '\')" ' +
+        return '<div onclick="drillDownScan(\'' + (r.kodeRuang || r.ruangId) + '\', \'' + targetContentId + '\')" ' +
                'class="p-3 bg-white hover:bg-cream-50/80 rounded-2xl border border-cream-200 hover:border-slate-400 shadow-xs transition-all cursor-pointer group flex flex-col justify-between space-y-2">' +
             '<div class="flex items-start justify-between gap-1">' +
               '<div>' +
@@ -2093,7 +2087,7 @@
     }
 
     content.innerHTML = 
-      '<div class="space-y-4 animate-fadeIn">' +
+      '<div class="space-y-4 animate-fadeIn">' + backBtnHtml +
         '<div class="p-5 rounded-3xl bg-gradient-to-br from-purple-900/90 via-indigo-950 to-slate-900 text-white shadow-soft relative overflow-hidden">' +
           '<div class="relative z-10">' +
             '<div class="flex items-center justify-between gap-2">' +
@@ -2194,6 +2188,10 @@
     if (!content) return;
     const rId = rm.ruangId || rm.idRuang;
 
+    const isRespon = targetContentId === 'scanResultContentRespon';
+    const historyStack = isRespon ? scanHistoryRespon : scanHistoryMain;
+    const backBtnHtml = historyStack.length > 1 ? '<button onclick="goBackScan(\'' + targetContentId + '\')" class="mb-3 px-3 py-1.5 rounded-xl bg-cream-100 hover:bg-cream-200 text-slate-700 text-[11px] font-bold transition flex items-center w-fit shadow-xs"><i class="fa-solid fa-arrow-left mr-1.5"></i>Kembali</button>' : '';
+
     const parentGedung = DB.buildings.find(function(b) { return String(b.gedungId).toUpperCase() === String(rm.gedungId).toUpperCase(); }) || { namaGedung: rm.namaGedung || '-' };
     const assetsInRoom = fromServer && rm.daftarAset ? rm.daftarAset : DB.assets.filter(function(a) { return String(a.ruangId).toUpperCase() === String(rId).toUpperCase() && a.statusAset !== 'Dimusnahkan'; });
 
@@ -2235,7 +2233,7 @@
               (a.spesifikasi ? '<p class="text-[10px] text-slate-500 truncate mt-0.5">' + a.spesifikasi + '</p>' : '') +
             '</div>' +
             '<div class="flex items-center gap-1.5 shrink-0">' +
-              '<button onclick="lookupCode(\'' + (a.kodeBarang || a.idAset || a.assetId) + '\', \'' + targetContentId + '\')" ' +
+              '<button onclick="drillDownScan(\'' + (a.kodeBarang || a.idAset || a.assetId) + '\', \'' + targetContentId + '\')" ' +
                       'class="px-2.5 py-1 rounded-lg bg-cream-100 hover:bg-cream-200 text-slate-700 text-[10px] font-bold transition">' +
                 'Detail' +
               '</button>' +
@@ -2245,7 +2243,7 @@
     }
 
     content.innerHTML = 
-      '<div class="space-y-4 animate-fadeIn">' +
+      '<div class="space-y-4 animate-fadeIn">' + backBtnHtml +
         '<div class="p-5 rounded-3xl bg-gradient-to-br from-cyan-900 via-sky-950 to-slate-900 text-white shadow-soft relative overflow-hidden">' +
           '<div class="relative z-10">' +
             '<div class="flex items-center justify-between gap-2">' +
@@ -2346,12 +2344,17 @@
     const bg = DB.buildings.find(function(b) { return String(b.gedungId).toUpperCase() === String(ast.gedungId).toUpperCase(); }) || { namaGedung: ast.namaGedung || '-' };
     const rm = DB.rooms.find(function(r) { return String(r.ruangId).toUpperCase() === String(ast.ruangId).toUpperCase(); }) || { namaRuang: ast.namaRuang || '-' };
 
+    const isRespon = targetContentId === 'scanResultContentRespon';
+    const historyStack = isRespon ? scanHistoryRespon : scanHistoryMain;
+    const backBtnHtml = historyStack.length > 1 ? '<button onclick="goBackScan(\'' + targetContentId + '\')" class="mb-3 px-3 py-1.5 rounded-xl bg-white border border-cream-200 hover:bg-cream-100 text-slate-700 text-[11px] font-bold transition flex items-center w-fit shadow-xs"><i class="fa-solid fa-arrow-left mr-1.5"></i>Kembali</button>' : '';
+
     let badgeKondisi = 'bg-emerald-100 text-emerald-800 border-emerald-200';
     if ((ast.kondisi || '').indexOf('Rusak Ringan') !== -1) badgeKondisi = 'bg-amber-100 text-amber-800 border-amber-200';
     if ((ast.kondisi || '').indexOf('Rusak Berat') !== -1) badgeKondisi = 'bg-rose-100 text-rose-800 border-rose-200';
 
     content.innerHTML = 
-      '<div class="p-5 rounded-2xl bg-cream-50 border dynamic-theme-border space-y-3.5 animate-fadeIn">' +
+      '<div class="animate-fadeIn">' + backBtnHtml +
+      '<div class="p-5 rounded-2xl bg-cream-50 border dynamic-theme-border space-y-3.5">' +
         '<div class="flex items-start justify-between gap-2">' +
           '<div>' +
             '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold dynamic-theme-bg-light dynamic-theme-text border dynamic-theme-border">Aset Sarpras Terverifikasi</span>' +
@@ -2381,20 +2384,26 @@
             '<i class="fa-solid fa-print mr-1"></i>Label' +
           '</button>' +
         '</div>' +
-      '</div>';
-    applyRolePermissions();
+    '</div></div>';
+  applyRolePermissions();
   }
 
   function renderUnknownCode(code, targetContentId) {
     targetContentId = targetContentId || 'scanResultContent';
     const content = document.getElementById(targetContentId);
     if (!content) return;
+    
+    const isRespon = targetContentId === 'scanResultContentRespon';
+    const historyStack = isRespon ? scanHistoryRespon : scanHistoryMain;
+    const backBtnHtml = historyStack.length > 1 ? '<button onclick="goBackScan(\'' + targetContentId + '\')" class="mb-3 px-3 py-1.5 rounded-xl bg-white border border-rose-200 hover:bg-rose-100 text-slate-700 text-[11px] font-bold transition flex items-center w-fit shadow-xs"><i class="fa-solid fa-arrow-left mr-1.5"></i>Kembali</button>' : '';
+
     content.innerHTML = 
+      '<div class="animate-fadeIn">' + backBtnHtml +
       '<div class="p-6 text-center text-rose-600 bg-rose-50 rounded-2xl border border-rose-200 space-y-2">' +
         '<i class="fa-solid fa-circle-question text-3xl"></i>' +
         '<h4 class="font-bold text-sm">Kode Tidak Dikenali</h4>' +
         '<p class="text-xs text-rose-500">Kode "<strong>' + code + '</strong>" tidak terdaftar pada database Gedung, Ruang, ataupun Aset Sarpras.</p>' +
-      '</div>';
+      '</div></div>';
   }
 
   function showQRCode(id, type) {
@@ -2975,7 +2984,7 @@
 
     const gasInput = document.getElementById('setGasApiUrl');
     if (gasInput) {
-      gasInput.value = localStorage.getItem('DS_GAS_API_URL') || GAS_API_URL || DEFAULT_GAS_API_URL;
+      gasInput.value = localStorage.getItem('DS_GAS_API_URL') || GAS_API_URL || '';
     }
   }
 
@@ -2988,7 +2997,7 @@
 
     const gasInput = document.getElementById('setGasApiUrl');
     if (gasInput) {
-      const newUrl = gasInput.value.trim() || DEFAULT_GAS_API_URL;
+      const newUrl = gasInput.value.trim();
       localStorage.setItem('DS_GAS_API_URL', newUrl);
       GAS_API_URL = newUrl;
     }
