@@ -209,7 +209,8 @@
     { id: 'ACT-1', text: 'Pencatatan aset PC All-in-One HP', time: 'Hari ini, 08:30', icon: 'fa-plus text-emerald-600' }
   ];
 
-  let GAS_API_URL = localStorage.getItem('DS_GAS_API_URL') || '';
+  const DEFAULT_GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzteE3XClLNY1_HZX4ocg9kk2LJJo7MSaXwc8JFz5baahxuRuAZCRKElw-He_Di3B1B6Q/exec';
+  let GAS_API_URL = DEFAULT_GAS_API_URL;
 
   /**
    * Universal Bridge API: Menghubungkan Frontend ke Google Apps Script
@@ -222,12 +223,16 @@
     // 1. Jika dijalankan di dalam container Google Apps Script
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       const runner = google.script.run
-        .withSuccessHandler(function(res) { if (onSuccess) onSuccess(res); })
-        .withFailureHandler(function(err) { if (onFailure) onFailure(err); });
+        .withSuccessHandler(function (res) { if (onSuccess) onSuccess(res); })
+        .withFailureHandler(function (err) { if (onFailure) onFailure(err); });
 
       if (action === 'getInitialData') runner.apiGetInitialData();
       else if (action === 'saveAsset') runner.apiSaveAsset(payload.data || payload);
       else if (action === 'deleteAsset') runner.apiDeleteAsset(payload.assetId);
+      else if (action === 'saveBuilding') runner.apiSaveBuilding(payload.data || payload);
+      else if (action === 'deleteBuilding') runner.apiDeleteBuilding(payload.gedungId);
+      else if (action === 'saveRoom') runner.apiSaveRoom(payload.data || payload);
+      else if (action === 'deleteRoom') runner.apiDeleteRoom(payload.ruangId);
       else if (action === 'saveMaintenance') runner.apiSaveMaintenance(payload.data || payload);
       else if (action === 'saveQuickReportWithImage') runner.apiSaveQuickReportWithImage(payload.data || payload);
       else if (action === 'saveProcurement') runner.apiSaveProcurement(payload.data || payload);
@@ -241,10 +246,10 @@
     }
 
     // 2. Jika dijalankan di GitHub Pages / Static Hosting
-    const targetUrl = GAS_API_URL || localStorage.getItem('DS_GAS_API_URL');
+    const targetUrl = GAS_API_URL || DEFAULT_GAS_API_URL;
     if (!targetUrl) {
-      console.warn('[ZettBOT Hub] URL Backend Google Apps Script belum disetel di menu Pengaturan.');
-      if (onFailure) onFailure(new Error('URL Web App Google Apps Script belum dikonfigurasi di Pengaturan'));
+      console.warn('[ZettBOT Hub] URL Backend Google Apps Script belum terpasang.');
+      if (onFailure) onFailure(new Error('URL Web App Google Apps Script belum terpasang.'));
       return;
     }
 
@@ -271,17 +276,17 @@
 
   const DB = {
     users: JSON.parse(localStorage.getItem('DS_USERS')) || INITIAL_USERS,
-    assets: JSON.parse(localStorage.getItem('DS_ASSETS')) || INITIAL_ASSETS,
-    buildings: JSON.parse(localStorage.getItem('DS_BUILDINGS')) || INITIAL_BUILDINGS,
-    rooms: JSON.parse(localStorage.getItem('DS_ROOMS')) || INITIAL_ROOMS,
-    maintenance: JSON.parse(localStorage.getItem('DS_MAINTENANCE')) || INITIAL_MAINTENANCE,
-    procurements: JSON.parse(localStorage.getItem('DS_PROCUREMENTS')) || INITIAL_PROCUREMENTS,
-    disposals: JSON.parse(localStorage.getItem('DS_DISPOSALS')) || INITIAL_DISPOSALS,
+    assets: JSON.parse(localStorage.getItem('DS_ASSETS')) || [],
+    buildings: JSON.parse(localStorage.getItem('DS_BUILDINGS')) || [],
+    rooms: JSON.parse(localStorage.getItem('DS_ROOMS')) || [],
+    maintenance: JSON.parse(localStorage.getItem('DS_MAINTENANCE')) || [],
+    procurements: JSON.parse(localStorage.getItem('DS_PROCUREMENTS')) || [],
+    disposals: JSON.parse(localStorage.getItem('DS_DISPOSALS')) || [],
     settings: JSON.parse(localStorage.getItem('DS_SETTINGS')) || INITIAL_SETTINGS,
     activities: JSON.parse(localStorage.getItem('DS_ACTIVITIES')) || INITIAL_ACTIVITIES,
     currentUser: JSON.parse(sessionStorage.getItem('DS_AUTH_USER')) || null,
 
-    save: function() {
+    save: function () {
       localStorage.setItem('DS_USERS', JSON.stringify(this.users));
       localStorage.setItem('DS_ASSETS', JSON.stringify(this.assets));
       localStorage.setItem('DS_BUILDINGS', JSON.stringify(this.buildings));
@@ -293,7 +298,7 @@
       localStorage.setItem('DS_ACTIVITIES', JSON.stringify(this.activities));
     },
 
-    logActivity: function(text, icon) {
+    logActivity: function (text, icon) {
       icon = icon || 'fa-circle-info text-magenta-600';
       const now = new Date();
       const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
@@ -311,7 +316,7 @@
 
   function playScannerBeep() {
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
-      try { navigator.vibrate([80, 40, 80]); } catch (e) {}
+      try { navigator.vibrate([80, 40, 80]); } catch (e) { }
     }
 
     try {
@@ -335,8 +340,8 @@
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.12);
 
-        setTimeout(function() {
-          try { ctx.close(); } catch (e) {}
+        setTimeout(function () {
+          try { ctx.close(); } catch (e) { }
         }, 350);
       }
     } catch (err) {
@@ -384,7 +389,7 @@
           lookupCode(decodedText, 'scanResultContentRespon', 'scanResultPlaceholderRespon');
           showToast('Kode QR berhasil dipindai!', 'success');
         },
-        function onScanFailure() {}
+        function onScanFailure() { }
       );
 
       isResponCameraRunning = true;
@@ -456,7 +461,7 @@
 
       const scannerEngine = new Html5Qrcode(targetReader);
       const decodedText = await scannerEngine.scanFile(imageFile, true);
-      
+
       playScannerBeep();
       lookupCode(decodedText);
       showToast('QR Code berhasil diidentifikasi!', 'success');
@@ -472,9 +477,9 @@
     const file = input.files[0];
 
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
       const img = new Image();
-      img.onload = function() {
+      img.onload = function () {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
@@ -531,9 +536,9 @@
     const file = input.files[0];
 
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
       const img = new Image();
-      img.onload = function() {
+      img.onload = function () {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
@@ -586,8 +591,8 @@
   }
 
   function applySystemTheme(themeId, fontId) {
-    const theme = THEME_PRESETS.find(function(t) { return t.id === themeId; }) || THEME_PRESETS[0];
-    const font = FONT_PRESETS.find(function(f) { return f.id === fontId; }) || FONT_PRESETS[0];
+    const theme = THEME_PRESETS.find(function (t) { return t.id === themeId; }) || THEME_PRESETS[0];
+    const font = FONT_PRESETS.find(function (f) { return f.id === fontId; }) || FONT_PRESETS[0];
 
     const root = document.documentElement;
     root.style.setProperty('--app-font-family', font.family);
@@ -613,7 +618,7 @@
 
   function selectThemePreset(themeId) {
     applySystemTheme(themeId, DB.settings.selectedFont || 'Inter');
-    showToast('Tema "' + (THEME_PRESETS.find(function(t) { return t.id === themeId; })?.name || themeId) + '" diterapkan!');
+    showToast('Tema "' + (THEME_PRESETS.find(function (t) { return t.id === themeId; })?.name || themeId) + '" diterapkan!');
     syncSettingsToBackend({ selectedTheme: themeId });
   }
 
@@ -638,13 +643,13 @@
       selectedFont: DB.settings.selectedFont || 'Inter'
     };
 
-    callBackendApi('saveSettings', payload, function(res) {
+    callBackendApi('saveSettings', payload, function (res) {
       btn.disabled = false;
       btn.classList.remove('opacity-75', 'cursor-not-allowed');
       btn.innerHTML = origHtml;
       showToast('Tema warna & font berhasil disimpan ke Google Sheets!', 'success');
       DB.logActivity('Tema diubah ke ' + payload.selectedTheme, 'fa-palette dynamic-theme-text');
-    }, function() {
+    }, function () {
       btn.disabled = false;
       btn.classList.remove('opacity-75', 'cursor-not-allowed');
       btn.innerHTML = origHtml;
@@ -657,23 +662,23 @@
     if (!container) return;
     const currentTheme = DB.settings.selectedTheme || 'magenta-rose';
 
-    container.innerHTML = THEME_PRESETS.map(function(t) {
+    container.innerHTML = THEME_PRESETS.map(function (t) {
       const isActive = t.id === currentTheme;
       return '<button type="button" onclick="selectThemePreset(\'' + t.id + '\')" ' +
-        'class="p-2.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between ' + 
+        'class="p-2.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between ' +
         (isActive ? 'border-2 border-slate-800 bg-white shadow-md ring-2 ring-slate-800/10' : 'border-cream-300 bg-cream-50/70 hover:bg-white hover:border-slate-400') + '">' +
         '<div>' +
-          '<div class="flex items-center space-x-1.5 mb-2">' +
-            '<div class="w-6 h-6 rounded-lg shadow-xs" style="background-color: ' + t.accentPreview + ';"></div>' +
-            '<div class="w-6 h-6 rounded-lg border border-slate-300" style="background-color: ' + t.bgPreview + ';"></div>' +
-          '</div>' +
-          '<p class="text-[11px] font-bold text-slate-800 leading-tight">' + t.name + '</p>' +
-          '<p class="text-[9px] text-slate-400 mt-0.5">' + t.desc + '</p>' +
+        '<div class="flex items-center space-x-1.5 mb-2">' +
+        '<div class="w-6 h-6 rounded-lg shadow-xs" style="background-color: ' + t.accentPreview + ';"></div>' +
+        '<div class="w-6 h-6 rounded-lg border border-slate-300" style="background-color: ' + t.bgPreview + ';"></div>' +
         '</div>' +
-        (isActive ? 
-          '<span class="mt-2 inline-flex items-center gap-1 text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md self-start"><i class="fa-solid fa-check text-[8px]"></i> Aktif</span>' : 
+        '<p class="text-[11px] font-bold text-slate-800 leading-tight">' + t.name + '</p>' +
+        '<p class="text-[9px] text-slate-400 mt-0.5">' + t.desc + '</p>' +
+        '</div>' +
+        (isActive ?
+          '<span class="mt-2 inline-flex items-center gap-1 text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md self-start"><i class="fa-solid fa-check text-[8px]"></i> Aktif</span>' :
           '<span class="mt-2 text-[9px] text-slate-400">Klik untuk pakai</span>') +
-      '</button>';
+        '</button>';
     }).join('');
   }
 
@@ -682,20 +687,20 @@
     if (!container) return;
     const currentFont = DB.settings.selectedFont || 'Inter';
 
-    container.innerHTML = FONT_PRESETS.map(function(f) {
+    container.innerHTML = FONT_PRESETS.map(function (f) {
       const isActive = f.id === currentFont;
       return '<button type="button" onclick="selectFontPreset(\'' + f.id + '\')" ' +
-        'class="p-2.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between ' + 
+        'class="p-2.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between ' +
         (isActive ? 'border-2 border-slate-800 bg-white shadow-md ring-2 ring-slate-800/10' : 'border-cream-300 bg-cream-50/70 hover:bg-white hover:border-slate-400') + '">' +
         '<div>' +
-          '<p class="text-sm font-bold text-slate-800" style="font-family: ' + f.family + ';">' + f.name + '</p>' +
-          '<p class="text-[9px] text-slate-400 mt-0.5">' + f.desc + '</p>' +
-          '<p class="text-[10px] text-slate-600 mt-1 font-medium" style="font-family: ' + f.family + ';">Aa Bb Gg 123</p>' +
+        '<p class="text-sm font-bold text-slate-800" style="font-family: ' + f.family + ';">' + f.name + '</p>' +
+        '<p class="text-[9px] text-slate-400 mt-0.5">' + f.desc + '</p>' +
+        '<p class="text-[10px] text-slate-600 mt-1 font-medium" style="font-family: ' + f.family + ';">Aa Bb Gg 123</p>' +
         '</div>' +
-        (isActive ? 
-          '<span class="mt-2 inline-flex items-center gap-1 text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md self-start"><i class="fa-solid fa-check text-[8px]"></i> Aktif</span>' : 
+        (isActive ?
+          '<span class="mt-2 inline-flex items-center gap-1 text-[9px] font-extrabold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md self-start"><i class="fa-solid fa-check text-[8px]"></i> Aktif</span>' :
           '<span class="mt-2 text-[9px] text-slate-400">Pilih font</span>') +
-      '</button>';
+        '</button>';
     }).join('');
   }
 
@@ -705,7 +710,7 @@
     pendingConfirmAction = onConfirmCallback;
 
     const proceedBtn = document.getElementById('btnConfirmProceed');
-    proceedBtn.onclick = function() {
+    proceedBtn.onclick = function () {
       if (typeof pendingConfirmAction === 'function') {
         pendingConfirmAction();
       }
@@ -719,7 +724,7 @@
     const container = document.getElementById('toastContainer');
     if (!container) return;
     const toast = document.createElement('div');
-    
+
     const isSuccess = type === 'success';
     const isError = type === 'error';
     const bg = isSuccess ? 'bg-white border-emerald-500 text-emerald-800' : isError ? 'bg-white border-rose-500 text-rose-800' : 'bg-white border-slate-500 text-slate-800';
@@ -729,17 +734,17 @@
     toast.innerHTML = '<i class="fa-solid ' + icon + ' text-base shrink-0"></i>' +
       '<span class="flex-1">' + message + '</span>' +
       '<button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 ml-2">' +
-        '<i class="fa-solid fa-xmark"></i>' +
+      '<i class="fa-solid fa-xmark"></i>' +
       '</button>';
 
     container.appendChild(toast);
-    setTimeout(function() {
+    setTimeout(function () {
       toast.classList.remove('translate-y-2', 'opacity-0');
     }, 50);
 
-    setTimeout(function() {
+    setTimeout(function () {
       toast.classList.add('opacity-0', 'translate-x-full');
-      setTimeout(function() { toast.remove(); }, 300);
+      setTimeout(function () { toast.remove(); }, 300);
     }, 4000);
   }
 
@@ -769,12 +774,12 @@
     const role = DB.currentUser?.role || 'Admin';
     const isGuest = role === 'Guest' || role === 'Guest/Tamu' || role === 'Tamu';
 
-    document.querySelectorAll('.nav-section-main, .nav-section-infra').forEach(function(el) {
+    document.querySelectorAll('.nav-section-main, .nav-section-infra').forEach(function (el) {
       if (isGuest) el.classList.add('hidden');
       else el.classList.remove('hidden');
     });
 
-    document.querySelectorAll('.role-non-guest').forEach(function(el) {
+    document.querySelectorAll('.role-non-guest').forEach(function (el) {
       if (isGuest) el.classList.add('hidden');
       else el.classList.remove('hidden');
     });
@@ -786,12 +791,12 @@
     if (mobAset) mobAset.style.display = isGuest ? 'none' : '';
     if (mobServis) mobServis.style.display = isGuest ? 'none' : '';
 
-    document.querySelectorAll('.role-admin-only').forEach(function(el) {
+    document.querySelectorAll('.role-admin-only').forEach(function (el) {
       if (role === 'Admin') el.classList.remove('hidden');
       else el.classList.add('hidden');
     });
 
-    document.querySelectorAll('.role-action-btn').forEach(function(btn) {
+    document.querySelectorAll('.role-action-btn').forEach(function (btn) {
       if (role === 'Kepala Sekolah' || isGuest) btn.classList.add('hidden');
       else btn.classList.remove('hidden');
     });
@@ -831,7 +836,7 @@
     const u = document.getElementById('loginUsername').value.trim();
     const p = document.getElementById('loginPassword').value.trim();
 
-    const foundUser = DB.users.find(function(user) {
+    const foundUser = DB.users.find(function (user) {
       return user.username.toLowerCase() === u.toLowerCase() || user.userId === u;
     });
 
@@ -853,7 +858,7 @@
     DB.currentUser = foundUser;
     sessionStorage.setItem('DS_AUTH_USER', JSON.stringify(foundUser));
     DB.logActivity(foundUser.nama + ' berhasil masuk', 'fa-right-to-bracket dynamic-theme-text');
-    
+
     initAppSession();
     showToast('Selamat datang, ' + foundUser.nama + '!', 'success');
   }
@@ -924,11 +929,11 @@
       viewId = 'respon';
     }
 
-    document.querySelectorAll('.app-view').forEach(function(v) { v.classList.add('hidden'); });
+    document.querySelectorAll('.app-view').forEach(function (v) { v.classList.add('hidden'); });
     const target = document.getElementById('view-' + viewId);
     if (target) target.classList.remove('hidden');
 
-    document.querySelectorAll('.nav-btn').forEach(function(btn) {
+    document.querySelectorAll('.nav-btn').forEach(function (btn) {
       const icon = btn.querySelector('i');
       if (btn.getAttribute('data-nav') === viewId) {
         btn.className = 'nav-btn w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-bold dynamic-theme-btn text-white shadow-sm transition';
@@ -945,7 +950,7 @@
       }
     });
 
-    document.querySelectorAll('[data-mob-nav]').forEach(function(btn) {
+    document.querySelectorAll('[data-mob-nav]').forEach(function (btn) {
       if (btn.getAttribute('data-mob-nav') === viewId) {
         btn.classList.add('dynamic-theme-text', 'font-bold');
         btn.classList.remove('text-slate-500');
@@ -984,11 +989,11 @@
   }
 
   function refreshDashboard() {
-    const activeAssets = DB.assets.filter(function(a) { return a.statusAset === 'Aktif'; });
+    const activeAssets = DB.assets.filter(function (a) { return a.statusAset === 'Aktif'; });
     const total = activeAssets.length;
-    const baik = activeAssets.filter(function(a) { return a.kondisi === 'Baik'; }).length;
-    const rusakRingan = activeAssets.filter(function(a) { return a.kondisi === 'Rusak Ringan'; }).length;
-    const rusakBerat = activeAssets.filter(function(a) { return a.kondisi === 'Rusak Berat'; }).length;
+    const baik = activeAssets.filter(function (a) { return a.kondisi === 'Baik'; }).length;
+    const rusakRingan = activeAssets.filter(function (a) { return a.kondisi === 'Rusak Ringan'; }).length;
+    const rusakBerat = activeAssets.filter(function (a) { return a.kondisi === 'Rusak Berat'; }).length;
 
     document.getElementById('statTotalAssets').innerText = total;
     document.getElementById('statKondisiBaik').innerText = baik;
@@ -1000,7 +1005,7 @@
     document.getElementById('statTotalRooms').innerText = DB.rooms.length;
     document.getElementById('statTotalProcurements').innerText = DB.procurements.length;
 
-    const pendingMaint = DB.maintenance.filter(function(m) { return m.status === 'Belum Diperbaiki'; });
+    const pendingMaint = DB.maintenance.filter(function (m) { return m.status === 'Belum Diperbaiki'; });
     document.getElementById('statNeedsRepair').innerText = pendingMaint.length;
 
     const badgePending = document.getElementById('badgePendingMaint');
@@ -1015,12 +1020,12 @@
     if (pendingMaint.length === 0) {
       maintListEl.innerHTML = '<div class="py-6 text-center text-xs text-slate-400">Tidak ada tanggungan perbaikan aktif saat ini. Semua aset terawat.</div>';
     } else {
-      maintListEl.innerHTML = pendingMaint.slice(0, 5).map(function(m) {
+      maintListEl.innerHTML = pendingMaint.slice(0, 5).map(function (m) {
         let targetName = 'Aset Tak Terdaftar';
         let targetKode = m.assetId;
-        const ast = DB.assets.find(function(a) { return a.assetId === m.assetId; });
-        const rm = DB.rooms.find(function(r) { return r.ruangId === m.assetId; });
-        const bg = DB.buildings.find(function(b) { return b.gedungId === m.assetId; });
+        const ast = DB.assets.find(function (a) { return a.assetId === m.assetId; });
+        const rm = DB.rooms.find(function (r) { return r.ruangId === m.assetId; });
+        const bg = DB.buildings.find(function (b) { return b.gedungId === m.assetId; });
 
         if (ast) { targetName = ast.namaBarang; targetKode = ast.kodeBarang; }
         else if (rm) { targetName = 'Ruang: ' + rm.namaRuang; targetKode = rm.kodeRuang; }
@@ -1028,26 +1033,26 @@
 
         return '<div class="py-3 flex items-center justify-between text-xs">' +
           '<div>' +
-            '<p class="font-bold text-slate-800">' + targetName + '</p>' +
-            '<p class="text-[11px] text-rose-600">' + m.kerusakan + '</p>' +
-            '<span class="text-[10px] text-slate-400">Dilaporkan: ' + m.tanggalLaporan + ' (' + targetKode + ')</span>' +
+          '<p class="font-bold text-slate-800">' + targetName + '</p>' +
+          '<p class="text-[11px] text-rose-600">' + m.kerusakan + '</p>' +
+          '<span class="text-[10px] text-slate-400">Dilaporkan: ' + m.tanggalLaporan + ' (' + targetKode + ')</span>' +
           '</div>' +
           '<button onclick="openResolveModal(\'' + m.maintenanceId + '\')" class="role-action-btn px-3 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-bold transition">Selesaikan</button>' +
-        '</div>';
+          '</div>';
       }).join('');
     }
 
     const actListEl = document.getElementById('dashboardActivityList');
-    actListEl.innerHTML = DB.activities.slice(0, 5).map(function(act) {
+    actListEl.innerHTML = DB.activities.slice(0, 5).map(function (act) {
       return '<div class="flex space-x-3 text-xs">' +
         '<div class="w-7 h-7 rounded-lg bg-cream-100 flex items-center justify-center shrink-0 mt-0.5">' +
-          '<i class="fa-solid ' + act.icon + ' text-xs"></i>' +
+        '<i class="fa-solid ' + act.icon + ' text-xs"></i>' +
         '</div>' +
         '<div class="flex-1 min-w-0">' +
-          '<p class="text-slate-800 font-medium leading-snug">' + act.text + '</p>' +
-          '<p class="text-[10px] text-slate-400 mt-0.5">' + act.time + '</p>' +
+        '<p class="text-slate-800 font-medium leading-snug">' + act.text + '</p>' +
+        '<p class="text-[10px] text-slate-400 mt-0.5">' + act.time + '</p>' +
         '</div>' +
-      '</div>';
+        '</div>';
     }).join('');
   }
 
@@ -1057,7 +1062,7 @@
     const kon = document.getElementById('filterAssetKondisi')?.value || '';
     const gdg = document.getElementById('filterAssetGedung')?.value || '';
 
-    const filtered = DB.assets.filter(function(a) {
+    const filtered = DB.assets.filter(function (a) {
       if (a.statusAset !== 'Aktif') return false;
       const matchQ = (a.kodeBarang + ' ' + a.namaBarang + ' ' + (a.spesifikasi || '')).toLowerCase().includes(q);
       const matchKat = !kat || a.kategori === kat;
@@ -1079,77 +1084,77 @@
     if (emptyState) emptyState.classList.add('hidden');
 
     if (tbody) {
-      tbody.innerHTML = filtered.map(function(a) {
-        const bg = DB.buildings.find(function(b) { return b.gedungId === a.gedungId; }) || { namaGedung: '-' };
-        const rm = DB.rooms.find(function(r) { return r.ruangId === a.ruangId; }) || { namaRuang: '-' };
-        
+      tbody.innerHTML = filtered.map(function (a) {
+        const bg = DB.buildings.find(function (b) { return b.gedungId === a.gedungId; }) || { namaGedung: '-' };
+        const rm = DB.rooms.find(function (r) { return r.ruangId === a.ruangId; }) || { namaRuang: '-' };
+
         let badgeKondisi = 'bg-emerald-50 text-emerald-700 border-emerald-200';
         if (a.kondisi === 'Rusak Ringan') badgeKondisi = 'bg-amber-50 text-amber-700 border-amber-200';
         if (a.kondisi === 'Rusak Berat') badgeKondisi = 'bg-rose-50 text-rose-700 border-rose-200';
 
         return '<tr class="hover:bg-cream-50/60 transition">' +
           '<td class="py-3 px-4">' +
-            '<p class="font-bold text-slate-800">' + a.namaBarang + '</p>' +
-            '<p class="text-[11px] font-mono dynamic-theme-text">' + a.kodeBarang + '</p>' +
+          '<p class="font-bold text-slate-800">' + a.namaBarang + '</p>' +
+          '<p class="text-[11px] font-mono dynamic-theme-text">' + a.kodeBarang + '</p>' +
           '</td>' +
           '<td class="py-3 px-4">' +
-            '<span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-cream-100 text-slate-700">' + a.kategori + '</span>' +
+          '<span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-cream-100 text-slate-700">' + a.kategori + '</span>' +
           '</td>' +
           '<td class="py-3 px-4">' +
-            '<p class="font-semibold text-slate-800">' + bg.namaGedung + '</p>' +
-            '<p class="text-[11px] text-slate-500">' + rm.namaRuang + '</p>' +
+          '<p class="font-semibold text-slate-800">' + bg.namaGedung + '</p>' +
+          '<p class="text-[11px] text-slate-500">' + rm.namaRuang + '</p>' +
           '</td>' +
           '<td class="py-3 px-4">' +
-            '<p class="font-bold text-slate-800">' + a.jumlah + ' ' + (a.satuan || 'Unit') + '</p>' +
-            '<p class="text-[11px] text-slate-500">Rp ' + Number(a.hargaPerolehan || 0).toLocaleString('id-ID') + '</p>' +
+          '<p class="font-bold text-slate-800">' + a.jumlah + ' ' + (a.satuan || 'Unit') + '</p>' +
+          '<p class="text-[11px] text-slate-500">Rp ' + Number(a.hargaPerolehan || 0).toLocaleString('id-ID') + '</p>' +
           '</td>' +
           '<td class="py-3 px-4 text-center">' +
-            '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ' + badgeKondisi + '">' + a.kondisi + '</span>' +
+          '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold border ' + badgeKondisi + '">' + a.kondisi + '</span>' +
           '</td>' +
           '<td class="py-3 px-4 text-right space-x-1">' +
-            '<button onclick="showQRCode(\'' + a.assetId + '\', \'asset\')" title="Cetak QR" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-cream-200">' +
-              '<i class="fa-solid fa-qrcode"></i>' +
-            '</button>' +
-            '<button onclick="showAssetDetail(\'' + a.assetId + '\')" title="Detail" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-cream-200">' +
-              '<i class="fa-solid fa-eye"></i>' +
-            '</button>' +
-            '<button onclick="editAsset(\'' + a.assetId + '\')" title="Edit" class="role-action-btn p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-cream-200">' +
-              '<i class="fa-solid fa-pen-to-square"></i>' +
-            '</button>' +
-            '<button onclick="deleteAssetConfirm(\'' + a.assetId + '\')" title="Hapus" class="role-action-btn p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50">' +
-              '<i class="fa-solid fa-trash"></i>' +
-            '</button>' +
+          '<button onclick="showQRCode(\'' + a.assetId + '\', \'asset\')" title="Cetak QR" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-cream-200">' +
+          '<i class="fa-solid fa-qrcode"></i>' +
+          '</button>' +
+          '<button onclick="showAssetDetail(\'' + a.assetId + '\')" title="Detail" class="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-cream-200">' +
+          '<i class="fa-solid fa-eye"></i>' +
+          '</button>' +
+          '<button onclick="editAsset(\'' + a.assetId + '\')" title="Edit" class="role-action-btn p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-cream-200">' +
+          '<i class="fa-solid fa-pen-to-square"></i>' +
+          '</button>' +
+          '<button onclick="deleteAssetConfirm(\'' + a.assetId + '\')" title="Hapus" class="role-action-btn p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50">' +
+          '<i class="fa-solid fa-trash"></i>' +
+          '</button>' +
           '</td>' +
-        '</tr>';
+          '</tr>';
       }).join('');
     }
 
     if (mobileCards) {
-      mobileCards.innerHTML = filtered.map(function(a) {
-        const bg = DB.buildings.find(function(b) { return b.gedungId === a.gedungId; }) || { namaGedung: '-' };
-        const rm = DB.rooms.find(function(r) { return r.ruangId === a.ruangId; }) || { namaRuang: '-' };
+      mobileCards.innerHTML = filtered.map(function (a) {
+        const bg = DB.buildings.find(function (b) { return b.gedungId === a.gedungId; }) || { namaGedung: '-' };
+        const rm = DB.rooms.find(function (r) { return r.ruangId === a.ruangId; }) || { namaRuang: '-' };
         let badgeKondisi = 'bg-emerald-50 text-emerald-700 border-emerald-200';
         if (a.kondisi === 'Rusak Ringan') badgeKondisi = 'bg-amber-50 text-amber-700 border-amber-200';
         if (a.kondisi === 'Rusak Berat') badgeKondisi = 'bg-rose-50 text-rose-700 border-rose-200';
 
         return '<div class="p-3 bg-cream-50/50 rounded-xl space-y-2 border border-cream-100">' +
           '<div class="flex justify-between items-start">' +
-            '<div>' +
-              '<p class="font-bold text-slate-800 text-xs">' + a.namaBarang + '</p>' +
-              '<p class="text-[10px] font-mono dynamic-theme-text">' + a.kodeBarang + '</p>' +
-            '</div>' +
-            '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold border ' + badgeKondisi + '">' + a.kondisi + '</span>' +
+          '<div>' +
+          '<p class="font-bold text-slate-800 text-xs">' + a.namaBarang + '</p>' +
+          '<p class="text-[10px] font-mono dynamic-theme-text">' + a.kodeBarang + '</p>' +
+          '</div>' +
+          '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold border ' + badgeKondisi + '">' + a.kondisi + '</span>' +
           '</div>' +
           '<div class="text-[11px] text-slate-600">' +
-            '<p><i class="fa-solid fa-location-dot w-4 text-slate-400"></i> ' + bg.namaGedung + ' • ' + rm.namaRuang + '</p>' +
-            '<p><i class="fa-solid fa-boxes-stacked w-4 text-slate-400"></i> ' + a.jumlah + ' ' + (a.satuan || 'Unit') + ' (Rp ' + Number(a.hargaPerolehan || 0).toLocaleString('id-ID') + ')</p>' +
+          '<p><i class="fa-solid fa-location-dot w-4 text-slate-400"></i> ' + bg.namaGedung + ' • ' + rm.namaRuang + '</p>' +
+          '<p><i class="fa-solid fa-boxes-stacked w-4 text-slate-400"></i> ' + a.jumlah + ' ' + (a.satuan || 'Unit') + ' (Rp ' + Number(a.hargaPerolehan || 0).toLocaleString('id-ID') + ')</p>' +
           '</div>' +
           '<div class="pt-2 border-t border-cream-200 flex justify-end space-x-1.5">' +
-            '<button onclick="showQRCode(\'' + a.assetId + '\', \'asset\')" class="px-2.5 py-1 rounded-lg bg-white border border-cream-300 text-[10px] font-bold text-slate-700"><i class="fa-solid fa-qrcode mr-1"></i>QR</button>' +
-            '<button onclick="showAssetDetail(\'' + a.assetId + '\')" class="px-2.5 py-1 rounded-lg bg-white border border-cream-300 text-[10px] font-bold text-slate-700"><i class="fa-solid fa-eye mr-1"></i>Detail</button>' +
-            '<button onclick="editAsset(\'' + a.assetId + '\')" class="role-action-btn px-2.5 py-1 rounded-lg dynamic-theme-btn text-[10px] font-bold text-white"><i class="fa-solid fa-pen mr-1"></i>Edit</button>' +
+          '<button onclick="showQRCode(\'' + a.assetId + '\', \'asset\')" class="px-2.5 py-1 rounded-lg bg-white border border-cream-300 text-[10px] font-bold text-slate-700"><i class="fa-solid fa-qrcode mr-1"></i>QR</button>' +
+          '<button onclick="showAssetDetail(\'' + a.assetId + '\')" class="px-2.5 py-1 rounded-lg bg-white border border-cream-300 text-[10px] font-bold text-slate-700"><i class="fa-solid fa-eye mr-1"></i>Detail</button>' +
+          '<button onclick="editAsset(\'' + a.assetId + '\')" class="role-action-btn px-2.5 py-1 rounded-lg dynamic-theme-btn text-[10px] font-bold text-white"><i class="fa-solid fa-pen mr-1"></i>Edit</button>' +
           '</div>' +
-        '</div>';
+          '</div>';
       }).join('');
     }
 
@@ -1159,7 +1164,7 @@
   function populateGedungFilterDropdown() {
     const select = document.getElementById('filterAssetGedung');
     if (!select) return;
-    select.innerHTML = '<option value="">Semua Gedung</option>' + DB.buildings.map(function(b) {
+    select.innerHTML = '<option value="">Semua Gedung</option>' + DB.buildings.map(function (b) {
       return '<option value="' + b.gedungId + '">' + b.namaGedung + ' (' + b.kodeGedung + ')</option>';
     }).join('');
   }
@@ -1167,12 +1172,12 @@
   function populateRoomDropdownForAsset(selectedGedungId, defaultRoomId) {
     const select = document.getElementById('assetFormRuang');
     if (!select) return;
-    const rooms = DB.rooms.filter(function(r) { return r.gedungId === selectedGedungId; });
+    const rooms = DB.rooms.filter(function (r) { return r.gedungId === selectedGedungId; });
 
     if (rooms.length === 0) {
       select.innerHTML = '<option value="">(Tidak ada ruang pada gedung ini)</option>';
     } else {
-      select.innerHTML = rooms.map(function(r) {
+      select.innerHTML = rooms.map(function (r) {
         const isSel = r.ruangId === defaultRoomId ? 'selected' : '';
         return '<option value="' + r.ruangId + '" ' + isSel + '>' + r.namaRuang + ' (' + r.kodeRuang + ')</option>';
       }).join('');
@@ -1184,12 +1189,12 @@
     form.reset();
 
     const gdgSelect = document.getElementById('assetFormGedung');
-    gdgSelect.innerHTML = DB.buildings.map(function(b) {
+    gdgSelect.innerHTML = DB.buildings.map(function (b) {
       return '<option value="' + b.gedungId + '">' + b.namaGedung + ' (' + b.kodeGedung + ')</option>';
     }).join('');
 
     if (assetId) {
-      const a = DB.assets.find(function(item) { return item.assetId === assetId; });
+      const a = DB.assets.find(function (item) { return item.assetId === assetId; });
       if (!a) return;
       document.getElementById('modalAssetTitle').innerText = 'Edit Data Aset';
       document.getElementById('assetFormId').value = a.assetId;
@@ -1253,7 +1258,7 @@
     };
 
     if (isEdit) {
-      const idx = DB.assets.findIndex(function(a) { return a.assetId === assetId; });
+      const idx = DB.assets.findIndex(function (a) { return a.assetId === assetId; });
       if (idx !== -1) DB.assets[idx] = assetData;
       DB.logActivity('Aset ' + nama + ' diperbarui', 'fa-pen-to-square text-amber-600');
       showToast('Data aset berhasil diperbarui!');
@@ -1272,11 +1277,11 @@
   }
 
   function deleteAssetConfirm(assetId) {
-    const a = DB.assets.find(function(item) { return item.assetId === assetId; });
+    const a = DB.assets.find(function (item) { return item.assetId === assetId; });
     if (!a) return;
 
-    promptConfirmation('Hapus Data Aset', 'Apakah Anda yakin ingin menghapus data aset "' + a.namaBarang + '" (' + a.kodeBarang + ')?', function() {
-      DB.assets = DB.assets.filter(function(item) { return item.assetId !== assetId; });
+    promptConfirmation('Hapus Data Aset', 'Apakah Anda yakin ingin menghapus data aset "' + a.namaBarang + '" (' + a.kodeBarang + ')?', function () {
+      DB.assets = DB.assets.filter(function (item) { return item.assetId !== assetId; });
       DB.save();
       DB.logActivity('Aset ' + a.namaBarang + ' dihapus', 'fa-trash text-rose-600');
       showToast('Aset telah dihapus.');
@@ -1288,33 +1293,33 @@
   }
 
   function showAssetDetail(assetId) {
-    const a = DB.assets.find(function(item) { return item.assetId === assetId; });
+    const a = DB.assets.find(function (item) { return item.assetId === assetId; });
     if (!a) return;
 
-    const bg = DB.buildings.find(function(b) { return b.gedungId === a.gedungId; }) || { namaGedung: '-' };
-    const rm = DB.rooms.find(function(r) { return r.ruangId === a.ruangId; }) || { namaRuang: '-' };
+    const bg = DB.buildings.find(function (b) { return b.gedungId === a.gedungId; }) || { namaGedung: '-' };
+    const rm = DB.rooms.find(function (r) { return r.ruangId === a.ruangId; }) || { namaRuang: '-' };
 
     document.getElementById('detailAssetTitle').innerText = a.namaBarang;
     const badge = document.getElementById('detailBadgeKondisi');
     badge.innerText = a.kondisi;
-    badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold ' + 
+    badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-bold ' +
       (a.kondisi === 'Baik' ? 'bg-emerald-50 text-emerald-700' : a.kondisi === 'Rusak Ringan' ? 'bg-amber-50 text-amber-700' : 'bg-rose-50 text-rose-700');
 
-    document.getElementById('detailAssetBody').innerHTML = 
+    document.getElementById('detailAssetBody').innerHTML =
       '<div class="grid grid-cols-2 gap-2 text-slate-600">' +
-        '<div><span class="text-slate-400 block text-[10px]">Kode Barang:</span><span class="font-mono font-bold text-slate-800">' + a.kodeBarang + '</span></div>' +
-        '<div><span class="text-slate-400 block text-[10px]">Kategori:</span><span class="font-medium text-slate-800">' + a.kategori + '</span></div>' +
-        '<div><span class="text-slate-400 block text-[10px]">Lokasi Gedung:</span><span class="font-medium text-slate-800">' + bg.namaGedung + '</span></div>' +
-        '<div><span class="text-slate-400 block text-[10px]">Ruang:</span><span class="font-medium text-slate-800">' + rm.namaRuang + '</span></div>' +
-        '<div><span class="text-slate-400 block text-[10px]">Jumlah:</span><span class="font-medium text-slate-800">' + a.jumlah + ' ' + (a.satuan || 'Unit') + '</span></div>' +
-        '<div><span class="text-slate-400 block text-[10px]">Harga Perolehan:</span><span class="font-medium text-slate-800">Rp ' + Number(a.hargaPerolehan || 0).toLocaleString('id-ID') + '</span></div>' +
-        '<div><span class="text-slate-400 block text-[10px]">Tahun Perolehan:</span><span class="font-medium text-slate-800">' + a.tahunPerolehan + ' (' + a.sumberDana + ')</span></div>' +
-        '<div><span class="text-slate-400 block text-[10px]">Penanggung Jawab:</span><span class="font-medium text-slate-800">' + (a.penanggungJawab || '-') + '</span></div>' +
+      '<div><span class="text-slate-400 block text-[10px]">Kode Barang:</span><span class="font-mono font-bold text-slate-800">' + a.kodeBarang + '</span></div>' +
+      '<div><span class="text-slate-400 block text-[10px]">Kategori:</span><span class="font-medium text-slate-800">' + a.kategori + '</span></div>' +
+      '<div><span class="text-slate-400 block text-[10px]">Lokasi Gedung:</span><span class="font-medium text-slate-800">' + bg.namaGedung + '</span></div>' +
+      '<div><span class="text-slate-400 block text-[10px]">Ruang:</span><span class="font-medium text-slate-800">' + rm.namaRuang + '</span></div>' +
+      '<div><span class="text-slate-400 block text-[10px]">Jumlah:</span><span class="font-medium text-slate-800">' + a.jumlah + ' ' + (a.satuan || 'Unit') + '</span></div>' +
+      '<div><span class="text-slate-400 block text-[10px]">Harga Perolehan:</span><span class="font-medium text-slate-800">Rp ' + Number(a.hargaPerolehan || 0).toLocaleString('id-ID') + '</span></div>' +
+      '<div><span class="text-slate-400 block text-[10px]">Tahun Perolehan:</span><span class="font-medium text-slate-800">' + a.tahunPerolehan + ' (' + a.sumberDana + ')</span></div>' +
+      '<div><span class="text-slate-400 block text-[10px]">Penanggung Jawab:</span><span class="font-medium text-slate-800">' + (a.penanggungJawab || '-') + '</span></div>' +
       '</div>' +
       (a.spesifikasi ? '<div class="pt-2 border-t border-cream-100"><span class="text-slate-400 block text-[10px]">Spesifikasi Teknis:</span><p class="text-slate-700 text-xs font-medium">' + a.spesifikasi + '</p></div>' : '') +
       (a.keterangan ? '<div class="pt-2 border-t border-cream-100"><span class="text-slate-400 block text-[10px]">Keterangan:</span><p class="text-slate-700 text-xs font-medium">' + a.keterangan + '</p></div>' : '') +
       '<div class="pt-3 border-t border-cream-100 flex justify-end space-x-2">' +
-        '<button onclick="showQRCode(\'' + a.assetId + '\', \'asset\')" class="px-3 py-1.5 rounded-xl dynamic-theme-btn text-white text-xs font-bold"><i class="fa-solid fa-qrcode mr-1"></i>Label QR</button>' +
+      '<button onclick="showQRCode(\'' + a.assetId + '\', \'asset\')" class="px-3 py-1.5 rounded-xl dynamic-theme-btn text-white text-xs font-bold"><i class="fa-solid fa-qrcode mr-1"></i>Label QR</button>' +
       '</div>';
     openModal('modalAssetDetail');
   }
@@ -1325,9 +1330,9 @@
       return;
     }
     const headers = ['Kode Barang', 'Nama Barang', 'Kategori', 'Kondisi', 'Jumlah', 'Satuan', 'Harga Perolehan', 'Tahun', 'Sumber Dana', 'Gedung', 'Ruang', 'Penanggung Jawab', 'Status'];
-    const rows = DB.assets.map(function(a) {
-      const bg = DB.buildings.find(function(b) { return b.gedungId === a.gedungId; })?.namaGedung || '';
-      const rm = DB.rooms.find(function(r) { return r.ruangId === a.ruangId; })?.namaRuang || '';
+    const rows = DB.assets.map(function (a) {
+      const bg = DB.buildings.find(function (b) { return b.gedungId === a.gedungId; })?.namaGedung || '';
+      const rm = DB.rooms.find(function (r) { return r.ruangId === a.ruangId; })?.namaRuang || '';
       return [
         '"' + a.kodeBarang + '"',
         '"' + a.namaBarang + '"',
@@ -1375,8 +1380,8 @@
     const container = document.getElementById('maintenanceCardsContainer');
     const emptyState = document.getElementById('maintenanceEmptyState');
 
-    const pending = DB.maintenance.filter(function(m) { return m.status === 'Belum Diperbaiki'; });
-    const completed = DB.maintenance.filter(function(m) { return m.status === 'Selesai'; });
+    const pending = DB.maintenance.filter(function (m) { return m.status === 'Belum Diperbaiki'; });
+    const completed = DB.maintenance.filter(function (m) { return m.status === 'Selesai'; });
 
     document.getElementById('countMaintPending').innerText = pending.length;
     document.getElementById('countMaintCompleted').innerText = completed.length;
@@ -1390,14 +1395,14 @@
     }
     emptyState.classList.add('hidden');
 
-    container.innerHTML = items.map(function(m) {
+    container.innerHTML = items.map(function (m) {
       let targetName = 'Entitas Tidak Terdaftar';
       let targetKode = '-';
       let targetSub = 'Aset / Lokasi';
 
-      const ast = DB.assets.find(function(a) { return a.assetId === m.assetId; });
-      const rm = DB.rooms.find(function(r) { return r.ruangId === m.assetId; });
-      const bg = DB.buildings.find(function(b) { return b.gedungId === m.assetId; });
+      const ast = DB.assets.find(function (a) { return a.assetId === m.assetId; });
+      const rm = DB.rooms.find(function (r) { return r.ruangId === m.assetId; });
+      const bg = DB.buildings.find(function (b) { return b.gedungId === m.assetId; });
 
       if (ast) {
         targetName = ast.namaBarang;
@@ -1417,46 +1422,46 @@
 
       return '<div class="bg-white rounded-2xl border border-cream-200/80 p-4 shadow-soft space-y-3 flex flex-col justify-between">' +
         '<div>' +
-          '<div class="flex items-start justify-between">' +
-            '<div>' +
-              '<h4 class="font-bold text-slate-800 text-sm">' + targetName + '</h4>' +
-              '<p class="text-[11px] font-mono dynamic-theme-text font-bold">' + targetKode + '</p>' +
-              '<span class="text-[10px] text-slate-400">' + targetSub + '</span>' +
-            '</div>' +
-            '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold ' + 
-              (isDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200') + '">' +
-              (isDone ? '<i class="fa-solid fa-check mr-1"></i>Selesai' : '<i class="fa-solid fa-wrench mr-1"></i>Perlu Perbaikan') +
-            '</span>' +
+        '<div class="flex items-start justify-between">' +
+        '<div>' +
+        '<h4 class="font-bold text-slate-800 text-sm">' + targetName + '</h4>' +
+        '<p class="text-[11px] font-mono dynamic-theme-text font-bold">' + targetKode + '</p>' +
+        '<span class="text-[10px] text-slate-400">' + targetSub + '</span>' +
+        '</div>' +
+        '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold ' +
+        (isDone ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200') + '">' +
+        (isDone ? '<i class="fa-solid fa-check mr-1"></i>Selesai' : '<i class="fa-solid fa-wrench mr-1"></i>Perlu Perbaikan') +
+        '</span>' +
+        '</div>' +
+        '<div class="p-3 bg-cream-50 rounded-xl my-2 border border-cream-100 text-xs">' +
+        '<p class="text-slate-400 text-[10px] font-semibold uppercase">Detail Kerusakan:</p>' +
+        '<p class="text-slate-700 mt-0.5">' + m.kerusakan + '</p>' +
+        '</div>' +
+        (isDone ?
+          '<div class="p-3 bg-emerald-50/70 rounded-xl border border-emerald-100 text-xs space-y-1.5">' +
+          '<p class="text-[10px] font-bold text-emerald-800 uppercase">Catatan Hasil Perbaikan:</p>' +
+          '<p class="text-emerald-900 leading-relaxed">' + (m.catatanPerbaikan || 'Selesai tanpa catatan khusus.') + '</p>' +
+          '<div class="flex flex-wrap items-center justify-between gap-1 pt-1 border-t border-emerald-200/70 text-[10px] text-emerald-700">' +
+          '<span>Tgl: <strong>' + m.tanggalSelesai + '</strong></span>' +
+          '<span>Kondisi: <strong>' + m.kondisiSetelah + '</strong></span>' +
           '</div>' +
-          '<div class="p-3 bg-cream-50 rounded-xl my-2 border border-cream-100 text-xs">' +
-            '<p class="text-slate-400 text-[10px] font-semibold uppercase">Detail Kerusakan:</p>' +
-            '<p class="text-slate-700 mt-0.5">' + m.kerusakan + '</p>' +
-          '</div>' +
-          (isDone ? 
-            '<div class="p-3 bg-emerald-50/70 rounded-xl border border-emerald-100 text-xs space-y-1.5">' +
-              '<p class="text-[10px] font-bold text-emerald-800 uppercase">Catatan Hasil Perbaikan:</p>' +
-              '<p class="text-emerald-900 leading-relaxed">' + (m.catatanPerbaikan || 'Selesai tanpa catatan khusus.') + '</p>' +
-              '<div class="flex flex-wrap items-center justify-between gap-1 pt-1 border-t border-emerald-200/70 text-[10px] text-emerald-700">' +
-                '<span>Tgl: <strong>' + m.tanggalSelesai + '</strong></span>' +
-                '<span>Kondisi: <strong>' + m.kondisiSetelah + '</strong></span>' +
-              '</div>' +
-              (m.fotoPerbaikanUrl ? 
-                '<div class="pt-1.5">' +
-                  '<a href="' + m.fotoPerbaikanUrl + '" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shadow-xs transition">' +
-                    '<i class="fa-solid fa-image"></i>' +
-                    '<span>Buka Foto Bukti Fisik Perbaikan (Google Drive)</span>' +
-                  '</a>' +
-                '</div>' : '') +
+          (m.fotoPerbaikanUrl ?
+            '<div class="pt-1.5">' +
+            '<a href="' + m.fotoPerbaikanUrl + '" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shadow-xs transition">' +
+            '<i class="fa-solid fa-image"></i>' +
+            '<span>Buka Foto Bukti Fisik Perbaikan (Google Drive)</span>' +
+            '</a>' +
             '</div>' : '') +
+          '</div>' : '') +
         '</div>' +
         '<div class="pt-2 border-t border-cream-100 flex items-center justify-between text-xs">' +
-          '<span class="text-[11px] text-slate-400">Lapor: ' + m.tanggalLaporan + '</span>' +
-          (!isDone ? 
-            '<button onclick="openResolveModal(\'' + m.maintenanceId + '\')" class="role-action-btn px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-xs flex items-center space-x-1">' +
-              '<i class="fa-solid fa-circle-check"></i><span>Selesaikan</span>' +
-            '</button>' : '') +
+        '<span class="text-[11px] text-slate-400">Lapor: ' + m.tanggalLaporan + '</span>' +
+        (!isDone ?
+          '<button onclick="openResolveModal(\'' + m.maintenanceId + '\')" class="role-action-btn px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-xs flex items-center space-x-1">' +
+          '<i class="fa-solid fa-circle-check"></i><span>Selesaikan</span>' +
+          '</button>' : '') +
         '</div>' +
-      '</div>';
+        '</div>';
     }).join('');
 
     applyRolePermissions();
@@ -1469,10 +1474,10 @@
 
     let optionsHtml = '';
 
-    const activeAssets = DB.assets.filter(function(a) { return a.statusAset === 'Aktif'; });
+    const activeAssets = DB.assets.filter(function (a) { return a.statusAset === 'Aktif'; });
     if (activeAssets.length > 0) {
       optionsHtml += '<optgroup label="-- DAFTAR ASET SARPRAS --">';
-      activeAssets.forEach(function(a) {
+      activeAssets.forEach(function (a) {
         const isSel = (a.assetId === presetTargetId || a.kodeBarang === presetTargetId) ? 'selected' : '';
         optionsHtml += '<option value="' + a.assetId + '" ' + isSel + '>' + a.namaBarang + ' (' + a.kodeBarang + ')</option>';
       });
@@ -1481,7 +1486,7 @@
 
     if (DB.rooms.length > 0) {
       optionsHtml += '<optgroup label="-- DATA RUANGAN SEKOLAH --">';
-      DB.rooms.forEach(function(r) {
+      DB.rooms.forEach(function (r) {
         const isSel = (r.ruangId === presetTargetId || r.kodeRuang === presetTargetId) ? 'selected' : '';
         optionsHtml += '<option value="' + r.ruangId + '" ' + isSel + '>Ruang: ' + r.namaRuang + ' (' + r.kodeRuang + ')</option>';
       });
@@ -1490,7 +1495,7 @@
 
     if (DB.buildings.length > 0) {
       optionsHtml += '<optgroup label="-- DATA BANGUNAN / GEDUNG --">';
-      DB.buildings.forEach(function(b) {
+      DB.buildings.forEach(function (b) {
         const isSel = (b.gedungId === presetTargetId || b.kodeGedung === presetTargetId) ? 'selected' : '';
         optionsHtml += '<option value="' + b.gedungId + '" ' + isSel + '>Gedung: ' + b.namaGedung + ' (' + b.kodeGedung + ')</option>';
       });
@@ -1500,7 +1505,7 @@
     select.innerHTML = optionsHtml;
     document.getElementById('maintFormTanggal').value = new Date().toISOString().slice(0, 10);
     document.getElementById('maintFormKerusakan').value = '';
-    
+
     const pelaporInput = document.getElementById('maintFormPelapor');
     if (pelaporInput) {
       pelaporInput.value = DB.currentUser?.nama || '';
@@ -1532,22 +1537,22 @@
     let namaObj = 'Entitas Sarpras';
     let lokasiStr = 'Area Sekolah';
 
-    const ast = DB.assets.find(function(a) { return a.assetId === targetId || a.kodeBarang === targetId; });
-    const rm = DB.rooms.find(function(r) { return r.ruangId === targetId || r.kodeRuang === targetId; });
-    const bg = DB.buildings.find(function(b) { return b.gedungId === targetId || b.kodeGedung === targetId; });
+    const ast = DB.assets.find(function (a) { return a.assetId === targetId || a.kodeBarang === targetId; });
+    const rm = DB.rooms.find(function (r) { return r.ruangId === targetId || r.kodeRuang === targetId; });
+    const bg = DB.buildings.find(function (b) { return b.gedungId === targetId || b.kodeGedung === targetId; });
 
     if (ast) {
       kodeObj = ast.kodeBarang;
       namaObj = ast.namaBarang;
       ast.kondisi = kondisiBaru;
-      const bParent = DB.buildings.find(function(b) { return b.gedungId === ast.gedungId; });
-      const rParent = DB.rooms.find(function(r) { return r.ruangId === ast.ruangId; });
+      const bParent = DB.buildings.find(function (b) { return b.gedungId === ast.gedungId; });
+      const rParent = DB.rooms.find(function (r) { return r.ruangId === ast.ruangId; });
       lokasiStr = (bParent ? bParent.namaGedung : '-') + ' / ' + (rParent ? rParent.namaRuang : '-');
     } else if (rm) {
       kodeObj = rm.kodeRuang;
       namaObj = 'Ruang: ' + rm.namaRuang;
       rm.kondisi = kondisiBaru;
-      const bParent = DB.buildings.find(function(b) { return b.gedungId === rm.gedungId; });
+      const bParent = DB.buildings.find(function (b) { return b.gedungId === rm.gedungId; });
       lokasiStr = (bParent ? bParent.namaGedung : '-') + ' • Lantai ' + (rm.lantai || 1);
     } else if (bg) {
       kodeObj = bg.kodeGedung;
@@ -1568,7 +1573,7 @@
       pelapor: pelapor
     };
 
-    callBackendApi('saveQuickReportWithImage', payload, function(res) {
+    callBackendApi('saveQuickReportWithImage', payload, function (res) {
       if (btnSubmit) btnSubmit.disabled = false;
       if (btnText) btnText.innerText = 'Kirim Laporan';
 
@@ -1598,7 +1603,7 @@
       } else {
         showToast(res?.message || 'Gagal mengirim laporan.', 'error');
       }
-    }, function(err) {
+    }, function (err) {
       if (btnSubmit) btnSubmit.disabled = false;
       if (btnText) btnText.innerText = 'Kirim Laporan';
       showToast('Koneksi server gagal: ' + err.message, 'error');
@@ -1609,13 +1614,13 @@
     const form = document.getElementById('formResolveMaint');
     if (form) form.reset();
 
-    const m = DB.maintenance.find(function(item) { return item.maintenanceId === maintId; });
+    const m = DB.maintenance.find(function (item) { return item.maintenanceId === maintId; });
     if (!m) return;
 
     let targetTitle = 'Objek Tidak Terdaftar';
-    const ast = DB.assets.find(function(a) { return a.assetId === m.assetId; });
-    const rm = DB.rooms.find(function(r) { return r.ruangId === m.assetId; });
-    const bg = DB.buildings.find(function(b) { return b.gedungId === m.assetId; });
+    const ast = DB.assets.find(function (a) { return a.assetId === m.assetId; });
+    const rm = DB.rooms.find(function (r) { return r.ruangId === m.assetId; });
+    const bg = DB.buildings.find(function (b) { return b.gedungId === m.assetId; });
 
     if (ast) {
       targetTitle = ast.namaBarang + ' (' + ast.kodeBarang + ')';
@@ -1655,7 +1660,7 @@
     if (btnSubmit) btnSubmit.disabled = true;
     if (btnText) btnText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Menyimpan...';
 
-    const m = DB.maintenance.find(function(item) { return item.maintenanceId === maintId; });
+    const m = DB.maintenance.find(function (item) { return item.maintenanceId === maintId; });
     if (m) {
       m.status = 'Selesai';
       m.tanggalSelesai = tgl;
@@ -1664,9 +1669,9 @@
       m.updatedBy = DB.currentUser?.nama || 'Admin Sarpras';
     }
 
-    const ast = DB.assets.find(function(a) { return a.assetId === assetId; });
-    const rm = DB.rooms.find(function(r) { return r.ruangId === assetId; });
-    const bg = DB.buildings.find(function(b) { return b.gedungId === assetId; });
+    const ast = DB.assets.find(function (a) { return a.assetId === assetId; });
+    const rm = DB.rooms.find(function (r) { return r.ruangId === assetId; });
+    const bg = DB.buildings.find(function (b) { return b.gedungId === assetId; });
     if (ast) ast.kondisi = kondisi;
     if (rm) rm.kondisi = kondisi;
     if (bg) bg.kondisi = kondisi;
@@ -1682,7 +1687,7 @@
       updatedBy: DB.currentUser?.nama || 'Admin Sarpras'
     };
 
-    callBackendApi('saveMaintenance', maintPayload, function(res) {
+    callBackendApi('saveMaintenance', maintPayload, function (res) {
       if (btnSubmit) btnSubmit.disabled = false;
       if (btnText) btnText.innerText = 'Simpan Status Selesai';
 
@@ -1700,7 +1705,7 @@
       } else {
         showToast(res?.message || 'Gagal menyimpan status selesai.', 'error');
       }
-    }, function(err) {
+    }, function (err) {
       if (btnSubmit) btnSubmit.disabled = false;
       if (btnText) btnText.innerText = 'Simpan Status Selesai';
       showToast('Koneksi server gagal: ' + err.message, 'error');
@@ -1736,7 +1741,7 @@
       procEmpty.classList.remove('hidden');
     } else {
       procEmpty.classList.add('hidden');
-      procBody.innerHTML = DB.procurements.map(function(p) {
+      procBody.innerHTML = DB.procurements.map(function (p) {
         return '<tr class="hover:bg-cream-50/60 transition">' +
           '<td class="py-3 px-4"><p class="font-bold text-slate-800">' + p.nomorPengadaan + '</p><p class="text-[11px] text-slate-400">' + p.tanggalPengadaan + '</p></td>' +
           '<td class="py-3 px-4"><p class="font-semibold text-slate-800">' + p.namaBarang + '</p><p class="text-[11px] text-slate-500">' + (p.spesifikasi || '-') + '</p></td>' +
@@ -1744,12 +1749,12 @@
           '<td class="py-3 px-4"><p class="font-bold text-slate-800">Rp ' + Number(p.totalHarga || 0).toLocaleString('id-ID') + '</p><p class="text-[10px] text-slate-400">@ Rp ' + Number(p.hargaSatuan || 0).toLocaleString('id-ID') + '</p></td>' +
           '<td class="py-3 px-4"><p class="font-medium text-slate-800">' + (p.penyedia || '-') + '</p><p class="text-[10px] dynamic-theme-text">' + p.sumberDana + '</p></td>' +
           '<td class="py-3 px-4 text-center">' +
-            (p.assetId ? '<span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-700 font-bold">Terdaftar di Aset</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-600 font-medium">Log Saja</span>') +
+          (p.assetId ? '<span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-50 text-emerald-700 font-bold">Terdaftar di Aset</span>' : '<span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-100 text-slate-600 font-medium">Log Saja</span>') +
           '</td>' +
           '<td class="py-3 px-4 text-right">' +
-            (!p.assetId ? '<button onclick="convertProcurementToAsset(\'' + p.pengadaanId + '\')" class="role-action-btn px-2.5 py-1 rounded-lg dynamic-theme-btn text-white text-[10px] font-bold">Jadikan Aset</button>' : '-') +
+          (!p.assetId ? '<button onclick="convertProcurementToAsset(\'' + p.pengadaanId + '\')" class="role-action-btn px-2.5 py-1 rounded-lg dynamic-theme-btn text-white text-[10px] font-bold">Jadikan Aset</button>' : '-') +
           '</td>' +
-        '</tr>';
+          '</tr>';
       }).join('');
     }
 
@@ -1761,8 +1766,8 @@
       dispEmpty.classList.remove('hidden');
     } else {
       dispEmpty.classList.add('hidden');
-      dispBody.innerHTML = DB.disposals.map(function(d) {
-        const ast = DB.assets.find(function(a) { return a.assetId === d.assetId; }) || { namaBarang: 'Aset', kodeBarang: '-' };
+      dispBody.innerHTML = DB.disposals.map(function (d) {
+        const ast = DB.assets.find(function (a) { return a.assetId === d.assetId; }) || { namaBarang: 'Aset', kodeBarang: '-' };
         return '<tr class="hover:bg-cream-50/60 transition">' +
           '<td class="py-3 px-4 font-mono font-bold dynamic-theme-text">' + d.nomorBeritaAcara + '</td>' +
           '<td class="py-3 px-4">' + d.tanggalPemusnahan + '</td>' +
@@ -1770,11 +1775,11 @@
           '<td class="py-3 px-4"><p class="text-rose-700 font-medium">' + d.alasan + '</p><p class="text-[11px] text-slate-400">Metode: ' + d.metode + '</p></td>' +
           '<td class="py-3 px-4">' + d.petugas + '</td>' +
           '<td class="py-3 px-4 text-right">' +
-            '<button onclick="printDisposalLetter(\'' + d.disposalId + '\')" class="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 bg-cream-100 hover:bg-cream-200 text-xs font-semibold">' +
-              '<i class="fa-solid fa-print mr-1"></i>BA' +
-            '</button>' +
+          '<button onclick="printDisposalLetter(\'' + d.disposalId + '\')" class="p-1.5 rounded-lg text-slate-600 hover:text-slate-900 bg-cream-100 hover:bg-cream-200 text-xs font-semibold">' +
+          '<i class="fa-solid fa-print mr-1"></i>BA' +
+          '</button>' +
           '</td>' +
-        '</tr>';
+          '</tr>';
       }).join('');
     }
 
@@ -1831,7 +1836,7 @@
   }
 
   function convertProcurementToAsset(procId) {
-    const p = DB.procurements.find(function(item) { return item.pengadaanId === procId; });
+    const p = DB.procurements.find(function (item) { return item.pengadaanId === procId; });
     if (!p) return;
 
     openAssetModal();
@@ -1848,7 +1853,7 @@
 
   function openDisposalModal() {
     const select = document.getElementById('dispAssetId');
-    select.innerHTML = DB.assets.filter(function(a) { return a.statusAset === 'Aktif'; }).map(function(a) {
+    select.innerHTML = DB.assets.filter(function (a) { return a.statusAset === 'Aktif'; }).map(function (a) {
       return '<option value="' + a.assetId + '">' + a.namaBarang + ' (' + a.kodeBarang + ' - Kondisi: ' + a.kondisi + ')</option>';
     }).join('');
 
@@ -1874,7 +1879,7 @@
       keterangan: document.getElementById('dispKet').value.trim()
     };
 
-    const ast = DB.assets.find(function(a) { return a.assetId === assetId; });
+    const ast = DB.assets.find(function (a) { return a.assetId === assetId; });
     if (ast) {
       ast.statusAset = 'Dimusnahkan';
     }
@@ -1892,36 +1897,36 @@
   }
 
   function printDisposalLetter(dispId) {
-    const d = DB.disposals.find(function(item) { return item.disposalId === dispId; });
+    const d = DB.disposals.find(function (item) { return item.disposalId === dispId; });
     if (!d) return;
-    const ast = DB.assets.find(function(a) { return a.assetId === d.assetId; }) || { namaBarang: '-', kodeBarang: '-' };
+    const ast = DB.assets.find(function (a) { return a.assetId === d.assetId; }) || { namaBarang: '-', kodeBarang: '-' };
 
     const w = window.open('', '_blank');
     w.document.write(
       '<html><head><title>Berita Acara Pemusnahan - ' + d.nomorBeritaAcara + '</title>' +
       '<style>body{font-family:"Times New Roman",serif;padding:40px;color:#111;line-height:1.6;}.header{text-align:center;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:24px;}h2{margin:0;font-size:18px;text-transform:uppercase;}p{margin:4px 0;font-size:13px;}table{width:100%;border-collapse:collapse;margin:20px 0;}th,td{border:1px solid #333;padding:8px 12px;font-size:12px;text-align:left;}.sign{margin-top:50px;display:flex;justify-content:space-between;}.sign-box{width:45%;text-align:center;}</style></head>' +
       '<body>' +
-        '<div class="header">' +
-          '<h2>' + (DB.settings.schoolName || 'SMP NEGERI 2 BANYUWANGI') + '</h2>' +
-          '<p>' + (DB.settings.schoolAddress || 'Jl. Ranggawuni No.41 Kebalenan Banyuwangi') + '</p>' +
-          '<p style="font-weight: bold; margin-top: 8px;">BERITA ACARA PENGHAPUSAN / PEMUSNAHAN BARANG INVENTARIS</p>' +
-          '<p>Nomor: ' + d.nomorBeritaAcara + '</p>' +
-        '</div>' +
-        '<p>Pada hari ini, tanggal <strong>' + d.tanggalPemusnahan + '</strong>, telah dilakukan tindakan pemusnahan/penghapusan terhadap barang inventaris sekolah dengan rincian:</p>' +
-        '<table>' +
-          '<tr><th>Nama Barang</th><td>' + ast.namaBarang + '</td></tr>' +
-          '<tr><th>Kode Barang</th><td>' + ast.kodeBarang + '</td></tr>' +
-          '<tr><th>Alasan Pemusnahan</th><td>' + d.alasan + '</td></tr>' +
-          '<tr><th>Metode Pemusnahan</th><td>' + d.metode + '</td></tr>' +
-          '<tr><th>Petugas Pelaksana</th><td>' + d.petugas + '</td></tr>' +
-          '<tr><th>Catatan Tambahan</th><td>' + (d.keterangan || '-') + '</td></tr>' +
-        '</table>' +
-        '<p>Demikian berita acara ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.</p>' +
-        '<div class="sign">' +
-          '<div class="sign-box"><p>Petugas Pelaksana,</p><br><br><br><p><strong>(' + d.petugas + ')</strong></p></div>' +
-          '<div class="sign-box"><p>Mengetahui,<br>Kepala Sekolah</p><br><br><p><strong>' + (DB.settings.principalName || 'Karyono, S.Pd.,M.T.') + '</strong><br>NIP. ' + (DB.settings.principalNIP || '-') + '</p></div>' +
-        '</div>' +
-        '<script>window.print();<\/script>' +
+      '<div class="header">' +
+      '<h2>' + (DB.settings.schoolName || 'SMP NEGERI 2 BANYUWANGI') + '</h2>' +
+      '<p>' + (DB.settings.schoolAddress || 'Jl. Ranggawuni No.41 Kebalenan Banyuwangi') + '</p>' +
+      '<p style="font-weight: bold; margin-top: 8px;">BERITA ACARA PENGHAPUSAN / PEMUSNAHAN BARANG INVENTARIS</p>' +
+      '<p>Nomor: ' + d.nomorBeritaAcara + '</p>' +
+      '</div>' +
+      '<p>Pada hari ini, tanggal <strong>' + d.tanggalPemusnahan + '</strong>, telah dilakukan tindakan pemusnahan/penghapusan terhadap barang inventaris sekolah dengan rincian:</p>' +
+      '<table>' +
+      '<tr><th>Nama Barang</th><td>' + ast.namaBarang + '</td></tr>' +
+      '<tr><th>Kode Barang</th><td>' + ast.kodeBarang + '</td></tr>' +
+      '<tr><th>Alasan Pemusnahan</th><td>' + d.alasan + '</td></tr>' +
+      '<tr><th>Metode Pemusnahan</th><td>' + d.metode + '</td></tr>' +
+      '<tr><th>Petugas Pelaksana</th><td>' + d.petugas + '</td></tr>' +
+      '<tr><th>Catatan Tambahan</th><td>' + (d.keterangan || '-') + '</td></tr>' +
+      '</table>' +
+      '<p>Demikian berita acara ini dibuat dengan sebenarnya untuk dapat dipergunakan sebagaimana mestinya.</p>' +
+      '<div class="sign">' +
+      '<div class="sign-box"><p>Petugas Pelaksana,</p><br><br><br><p><strong>(' + d.petugas + ')</strong></p></div>' +
+      '<div class="sign-box"><p>Mengetahui,<br>Kepala Sekolah</p><br><br><p><strong>' + (DB.settings.principalName || 'Karyono, S.Pd.,M.T.') + '</strong><br>NIP. ' + (DB.settings.principalNIP || '-') + '</p></div>' +
+      '</div>' +
+      '<script>window.print();<\/script>' +
       '</body></html>'
     );
     w.document.close();
@@ -1965,17 +1970,17 @@
     if (placeholder) placeholder.classList.add('hidden');
     if (content) {
       content.classList.remove('hidden');
-      content.innerHTML = 
+      content.innerHTML =
         '<div class="p-8 text-center text-slate-500 text-xs">' +
-          '<i class="fa-solid fa-spinner fa-spin text-2xl dynamic-theme-text mb-2 block"></i>' +
-          '<span>Mengidentifikasi data entitas "' + code + '"...</span>' +
+        '<i class="fa-solid fa-spinner fa-spin text-2xl dynamic-theme-text mb-2 block"></i>' +
+        '<span>Mengidentifikasi data entitas "' + code + '"...</span>' +
         '</div>';
     }
 
-    const bg = DB.buildings.find(function(b) {
-      return (b.kodeGedung && b.kodeGedung.toUpperCase() === code) || 
-             (b.gedungId && b.gedungId.toUpperCase() === code) ||
-             (b.namaGedung && b.namaGedung.trim().toUpperCase() === code);
+    const bg = DB.buildings.find(function (b) {
+      return (b.kodeGedung && b.kodeGedung.toUpperCase() === code) ||
+        (b.gedungId && b.gedungId.toUpperCase() === code) ||
+        (b.namaGedung && b.namaGedung.trim().toUpperCase() === code);
     });
 
     if (bg) {
@@ -1984,10 +1989,10 @@
       return;
     }
 
-    const rm = DB.rooms.find(function(r) {
-      return (r.kodeRuang && r.kodeRuang.toUpperCase() === code) || 
-             (r.ruangId && r.ruangId.toUpperCase() === code) ||
-             (r.namaRuang && r.namaRuang.trim().toUpperCase() === code);
+    const rm = DB.rooms.find(function (r) {
+      return (r.kodeRuang && r.kodeRuang.toUpperCase() === code) ||
+        (r.ruangId && r.ruangId.toUpperCase() === code) ||
+        (r.namaRuang && r.namaRuang.trim().toUpperCase() === code);
     });
 
     if (rm) {
@@ -1996,9 +2001,9 @@
       return;
     }
 
-    const ast = DB.assets.find(function(a) {
-      return (a.kodeBarang && a.kodeBarang.toUpperCase() === code) || 
-             (a.assetId && a.assetId.toUpperCase() === code);
+    const ast = DB.assets.find(function (a) {
+      return (a.kodeBarang && a.kodeBarang.toUpperCase() === code) ||
+        (a.assetId && a.assetId.toUpperCase() === code);
     });
 
     if (ast) {
@@ -2007,7 +2012,7 @@
       return;
     }
 
-    callBackendApi('getDetailIdentifikasiQR', { code: code }, function(res) {
+    callBackendApi('getDetailIdentifikasiQR', { code: code }, function (res) {
       if (res && res.success && res.data) {
         playScannerBeep();
         if (res.tipe === 'gedung') renderGedungDetailScan(res.data, true, contentId);
@@ -2016,7 +2021,7 @@
       } else {
         renderUnknownCode(code, contentId);
       }
-    }, function() {
+    }, function () {
       renderUnknownCode(code, contentId);
     });
   }
@@ -2027,16 +2032,16 @@
     const content = document.getElementById(targetContentId);
     if (!content) return;
     const gId = bg.gedungId || bg.idGedung;
-    
+
     const isRespon = targetContentId === 'scanResultContentRespon';
     const historyStack = isRespon ? scanHistoryRespon : scanHistoryMain;
     const backBtnHtml = historyStack.length > 1 ? '<button onclick="goBackScan(\'' + targetContentId + '\')" class="mb-3 px-3 py-1.5 rounded-xl bg-cream-100 hover:bg-cream-200 text-slate-700 text-[11px] font-bold transition flex items-center w-fit shadow-xs"><i class="fa-solid fa-arrow-left mr-1.5"></i>Kembali</button>' : '';
 
-    const roomsInGedung = fromServer && bg.daftarRuang ? bg.daftarRuang : DB.rooms.filter(function(r) { 
-      return String(r.gedungId).toUpperCase() === String(gId).toUpperCase(); 
+    const roomsInGedung = fromServer && bg.daftarRuang ? bg.daftarRuang : DB.rooms.filter(function (r) {
+      return String(r.gedungId).toUpperCase() === String(gId).toUpperCase();
     });
 
-    const assetsInGedung = DB.assets.filter(function(a) {
+    const assetsInGedung = DB.assets.filter(function (a) {
       return String(a.gedungId).toUpperCase() === String(gId).toUpperCase() && a.statusAset !== 'Dimusnahkan';
     });
 
@@ -2046,7 +2051,7 @@
       countRusakRingan = bg.rekapKondisi.rusakRingan || 0;
       countRusakBerat = bg.rekapKondisi.rusakBerat || 0;
     } else {
-      assetsInGedung.forEach(function(a) {
+      assetsInGedung.forEach(function (a) {
         const k = (a.kondisi || '').toLowerCase();
         if (k.indexOf('rusak berat') !== -1) countRusakBerat++;
         else if (k.indexOf('rusak') !== -1) countRusakRingan++;
@@ -2063,120 +2068,120 @@
     if (roomsInGedung.length === 0) {
       roomsHtml = '<p class="col-span-full p-6 text-center text-xs text-slate-400 bg-cream-50 rounded-2xl border border-cream-200">Belum ada ruangan yang didaftarkan pada gedung ini.</p>';
     } else {
-      roomsHtml = roomsInGedung.map(function(r) {
-        const asetDiRuang = DB.assets.filter(function(a) { return String(a.ruangId).toUpperCase() === String(r.ruangId).toUpperCase() && a.statusAset !== 'Dimusnahkan'; });
+      roomsHtml = roomsInGedung.map(function (r) {
+        const asetDiRuang = DB.assets.filter(function (a) { return String(a.ruangId).toUpperCase() === String(r.ruangId).toUpperCase() && a.statusAset !== 'Dimusnahkan'; });
         return '<div onclick="drillDownScan(\'' + (r.kodeRuang || r.ruangId) + '\', \'' + targetContentId + '\')" ' +
-               'class="p-3 bg-white hover:bg-cream-50/80 rounded-2xl border border-cream-200 hover:border-slate-400 shadow-xs transition-all cursor-pointer group flex flex-col justify-between space-y-2">' +
-            '<div class="flex items-start justify-between gap-1">' +
-              '<div>' +
-                '<h5 class="font-bold text-slate-800 text-xs group-hover:text-magenta-700 transition">' + r.namaRuang + '</h5>' +
-                '<p class="text-[10px] font-mono text-slate-400">' + (r.kodeRuang || '-') + '</p>' +
-              '</div>' +
-              '<span class="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-cream-100 text-slate-700 shrink-0">Lt. ' + (r.lantai || 1) + '</span>' +
-            '</div>' +
-            '<div class="text-[10px] text-slate-500 space-y-0.5">' +
-              '<p><i class="fa-solid fa-users w-3.5 text-slate-400"></i>Kapasitas: <strong>' + (r.kapasitas || 0) + ' Org</strong></p>' +
-              '<p><i class="fa-solid fa-user-tie w-3.5 text-slate-400"></i>PJ: <strong>' + (r.penanggungJawab || '-') + '</strong></p>' +
-            '</div>' +
-            '<div class="pt-2 border-t border-cream-100 flex items-center justify-between text-[10px]">' +
-              '<span class="font-semibold text-emerald-600">' + asetDiRuang.length + ' Aset Terpasang</span>' +
-              '<span class="font-bold dynamic-theme-text flex items-center gap-1">Lihat <i class="fa-solid fa-arrow-right text-[8px]"></i></span>' +
-            '</div>' +
+          'class="p-3 bg-white hover:bg-cream-50/80 rounded-2xl border border-cream-200 hover:border-slate-400 shadow-xs transition-all cursor-pointer group flex flex-col justify-between space-y-2">' +
+          '<div class="flex items-start justify-between gap-1">' +
+          '<div>' +
+          '<h5 class="font-bold text-slate-800 text-xs group-hover:text-magenta-700 transition">' + r.namaRuang + '</h5>' +
+          '<p class="text-[10px] font-mono text-slate-400">' + (r.kodeRuang || '-') + '</p>' +
+          '</div>' +
+          '<span class="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-cream-100 text-slate-700 shrink-0">Lt. ' + (r.lantai || 1) + '</span>' +
+          '</div>' +
+          '<div class="text-[10px] text-slate-500 space-y-0.5">' +
+          '<p><i class="fa-solid fa-users w-3.5 text-slate-400"></i>Kapasitas: <strong>' + (r.kapasitas || 0) + ' Org</strong></p>' +
+          '<p><i class="fa-solid fa-user-tie w-3.5 text-slate-400"></i>PJ: <strong>' + (r.penanggungJawab || '-') + '</strong></p>' +
+          '</div>' +
+          '<div class="pt-2 border-t border-cream-100 flex items-center justify-between text-[10px]">' +
+          '<span class="font-semibold text-emerald-600">' + asetDiRuang.length + ' Aset Terpasang</span>' +
+          '<span class="font-bold dynamic-theme-text flex items-center gap-1">Lihat <i class="fa-solid fa-arrow-right text-[8px]"></i></span>' +
+          '</div>' +
           '</div>';
       }).join('');
     }
 
-    content.innerHTML = 
+    content.innerHTML =
       '<div class="space-y-4 animate-fadeIn">' + backBtnHtml +
-        '<div class="p-5 rounded-3xl bg-gradient-to-br from-purple-900/90 via-indigo-950 to-slate-900 text-white shadow-soft relative overflow-hidden">' +
-          '<div class="relative z-10">' +
-            '<div class="flex items-center justify-between gap-2">' +
-              '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/20 backdrop-blur-md text-purple-200 border border-white/20">' +
-                '<i class="fa-solid fa-school"></i>' +
-                '<span>Gedung Terverifikasi</span>' +
-              '</span>' +
-              '<span class="text-xs font-mono font-bold bg-purple-500/30 px-2.5 py-1 rounded-lg border border-purple-400/30">' + (bg.kodeGedung || '-') + '</span>' +
-            '</div>' +
-            '<h3 class="text-lg sm:text-xl font-black mt-2 leading-tight">' + bg.namaGedung + '</h3>' +
-            '<p class="text-xs text-purple-200/90 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">' +
-              '<span><i class="fa-solid fa-layer-group text-purple-300 mr-1"></i>' + (bg.jenisBangunan || 'Akademik') + '</span>' +
-              '<span><i class="fa-solid fa-ruler-combined text-purple-300 mr-1"></i>Luas: ' + (bg.luas || 0) + ' m²</span>' +
-              '<span><i class="fa-solid fa-stairs text-purple-300 mr-1"></i>' + (bg.jumlahLantai || 1) + ' Lantai</span>' +
-            '</p>' +
-            (bg.keterangan ? '<p class="text-[11px] text-white/70 mt-2 bg-white/10 p-2 rounded-xl backdrop-blur-xs leading-relaxed">' + bg.keterangan + '</p>' : '') +
-          '</div>' +
-          '<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-purple-500/20 rounded-full blur-xl pointer-events-none"></div>' +
-        '</div>' +
+      '<div class="p-5 rounded-3xl bg-gradient-to-br from-purple-900/90 via-indigo-950 to-slate-900 text-white shadow-soft relative overflow-hidden">' +
+      '<div class="relative z-10">' +
+      '<div class="flex items-center justify-between gap-2">' +
+      '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/20 backdrop-blur-md text-purple-200 border border-white/20">' +
+      '<i class="fa-solid fa-school"></i>' +
+      '<span>Gedung Terverifikasi</span>' +
+      '</span>' +
+      '<span class="text-xs font-mono font-bold bg-purple-500/30 px-2.5 py-1 rounded-lg border border-purple-400/30">' + (bg.kodeGedung || '-') + '</span>' +
+      '</div>' +
+      '<h3 class="text-lg sm:text-xl font-black mt-2 leading-tight">' + bg.namaGedung + '</h3>' +
+      '<p class="text-xs text-purple-200/90 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">' +
+      '<span><i class="fa-solid fa-layer-group text-purple-300 mr-1"></i>' + (bg.jenisBangunan || 'Akademik') + '</span>' +
+      '<span><i class="fa-solid fa-ruler-combined text-purple-300 mr-1"></i>Luas: ' + (bg.luas || 0) + ' m²</span>' +
+      '<span><i class="fa-solid fa-stairs text-purple-300 mr-1"></i>' + (bg.jumlahLantai || 1) + ' Lantai</span>' +
+      '</p>' +
+      (bg.keterangan ? '<p class="text-[11px] text-white/70 mt-2 bg-white/10 p-2 rounded-xl backdrop-blur-xs leading-relaxed">' + bg.keterangan + '</p>' : '') +
+      '</div>' +
+      '<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-purple-500/20 rounded-full blur-xl pointer-events-none"></div>' +
+      '</div>' +
 
-        '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">' +
-          '<div class="p-3 bg-cream-50 rounded-2xl border border-cream-200">' +
-            '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Ruang</p>' +
-            '<h4 class="text-base font-extrabold text-slate-800 mt-0.5">' + roomsInGedung.length + '</h4>' +
-            '<span class="text-[9px] text-purple-700 font-semibold">Unit Ruangan</span>' +
-          '</div>' +
-          '<div class="p-3 bg-cream-50 rounded-2xl border border-cream-200">' +
-            '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Aset</p>' +
-            '<h4 class="text-base font-extrabold dynamic-theme-text mt-0.5">' + totalAset + '</h4>' +
-            '<span class="text-[9px] text-slate-500 font-semibold">Item Sarpras</span>' +
-          '</div>' +
-          '<div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200">' +
-            '<p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Kondisi Baik</p>' +
-            '<h4 class="text-base font-extrabold text-emerald-700 mt-0.5">' + countBaik + '</h4>' +
-            '<span class="text-[9px] text-emerald-600 font-semibold">' + pBaik + '% Sehat</span>' +
-          '</div>' +
-          '<div class="p-3 bg-rose-50/70 rounded-2xl border border-rose-200">' +
-            '<p class="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Perlu Servis</p>' +
-            '<h4 class="text-base font-extrabold text-rose-700 mt-0.5">' + (countRusakRingan + countRusakBerat) + '</h4>' +
-            '<span class="text-[9px] text-rose-600 font-semibold">Butuh Perbaikan</span>' +
-          '</div>' +
-        '</div>' +
+      '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">' +
+      '<div class="p-3 bg-cream-50 rounded-2xl border border-cream-200">' +
+      '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Ruang</p>' +
+      '<h4 class="text-base font-extrabold text-slate-800 mt-0.5">' + roomsInGedung.length + '</h4>' +
+      '<span class="text-[9px] text-purple-700 font-semibold">Unit Ruangan</span>' +
+      '</div>' +
+      '<div class="p-3 bg-cream-50 rounded-2xl border border-cream-200">' +
+      '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Aset</p>' +
+      '<h4 class="text-base font-extrabold dynamic-theme-text mt-0.5">' + totalAset + '</h4>' +
+      '<span class="text-[9px] text-slate-500 font-semibold">Item Sarpras</span>' +
+      '</div>' +
+      '<div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200">' +
+      '<p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Kondisi Baik</p>' +
+      '<h4 class="text-base font-extrabold text-emerald-700 mt-0.5">' + countBaik + '</h4>' +
+      '<span class="text-[9px] text-emerald-600 font-semibold">' + pBaik + '% Sehat</span>' +
+      '</div>' +
+      '<div class="p-3 bg-rose-50/70 rounded-2xl border border-rose-200">' +
+      '<p class="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Perlu Servis</p>' +
+      '<h4 class="text-base font-extrabold text-rose-700 mt-0.5">' + (countRusakRingan + countRusakBerat) + '</h4>' +
+      '<span class="text-[9px] text-rose-600 font-semibold">Butuh Perbaikan</span>' +
+      '</div>' +
+      '</div>' +
 
-        '<div class="p-4 bg-white rounded-2xl border border-cream-200 shadow-xs space-y-2">' +
-          '<div class="flex items-center justify-between text-xs">' +
-            '<span class="font-bold text-slate-700 flex items-center gap-1.5">' +
-              '<i class="fa-solid fa-chart-pie dynamic-theme-text"></i>' +
-              '<span>Rasio Kondisi Aset di Gedung</span>' +
-            '</span>' +
-            '<span class="text-[11px] font-semibold text-emerald-600">' + pBaik + '% Kondisi Prima</span>' +
-          '</div>' +
-          '<div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">' +
-            '<div style="width: ' + pBaik + '%" class="bg-emerald-500 h-full transition-all duration-500" title="Baik: ' + countBaik + '"></div>' +
-            '<div style="width: ' + pRusak + '%" class="bg-amber-400 h-full transition-all duration-500" title="Rusak Ringan: ' + countRusakRingan + '"></div>' +
-            '<div style="width: ' + pBerat + '%" class="bg-rose-500 h-full transition-all duration-500" title="Rusak Berat: ' + countRusakBerat + '"></div>' +
-          '</div>' +
-          '<div class="flex flex-wrap items-center justify-between gap-2 text-[10.5px] text-slate-500 pt-1">' +
-            '<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Baik (' + countBaik + ')</span>' +
-            '<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>Rusak Ringan (' + countRusakRingan + ')</span>' +
-            '<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>Rusak Berat (' + countRusakBerat + ')</span>' +
-          '</div>' +
-        '</div>' +
+      '<div class="p-4 bg-white rounded-2xl border border-cream-200 shadow-xs space-y-2">' +
+      '<div class="flex items-center justify-between text-xs">' +
+      '<span class="font-bold text-slate-700 flex items-center gap-1.5">' +
+      '<i class="fa-solid fa-chart-pie dynamic-theme-text"></i>' +
+      '<span>Rasio Kondisi Aset di Gedung</span>' +
+      '</span>' +
+      '<span class="text-[11px] font-semibold text-emerald-600">' + pBaik + '% Kondisi Prima</span>' +
+      '</div>' +
+      '<div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">' +
+      '<div style="width: ' + pBaik + '%" class="bg-emerald-500 h-full transition-all duration-500" title="Baik: ' + countBaik + '"></div>' +
+      '<div style="width: ' + pRusak + '%" class="bg-amber-400 h-full transition-all duration-500" title="Rusak Ringan: ' + countRusakRingan + '"></div>' +
+      '<div style="width: ' + pBerat + '%" class="bg-rose-500 h-full transition-all duration-500" title="Rusak Berat: ' + countRusakBerat + '"></div>' +
+      '</div>' +
+      '<div class="flex flex-wrap items-center justify-between gap-2 text-[10.5px] text-slate-500 pt-1">' +
+      '<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Baik (' + countBaik + ')</span>' +
+      '<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>Rusak Ringan (' + countRusakRingan + ')</span>' +
+      '<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>Rusak Berat (' + countRusakBerat + ')</span>' +
+      '</div>' +
+      '</div>' +
 
-        '<div class="space-y-2.5 pt-2">' +
-          '<div class="flex items-center justify-between">' +
-            '<h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">' +
-              '<i class="fa-solid fa-door-open dynamic-theme-text"></i>' +
-              '<span>Daftar Ruangan di Gedung Ini (' + roomsInGedung.length + ')</span>' +
-            '</h4>' +
-            '<span class="text-[10px] text-slate-400">Klik kartu untuk detail ruang</span>' +
-          '</div>' +
-          '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1">' +
-            roomsHtml +
-          '</div>' +
-        '</div>' +
+      '<div class="space-y-2.5 pt-2">' +
+      '<div class="flex items-center justify-between">' +
+      '<h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">' +
+      '<i class="fa-solid fa-door-open dynamic-theme-text"></i>' +
+      '<span>Daftar Ruangan di Gedung Ini (' + roomsInGedung.length + ')</span>' +
+      '</h4>' +
+      '<span class="text-[10px] text-slate-400">Klik kartu untuk detail ruang</span>' +
+      '</div>' +
+      '<div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-72 overflow-y-auto pr-1">' +
+      roomsHtml +
+      '</div>' +
+      '</div>' +
 
-        '<div class="flex flex-wrap gap-2 pt-3 border-t border-cream-200">' +
-          '<button onclick="openReportMaintenanceModal(\'' + (bg.gedungId || bg.idGedung) + '\', \'building\')" ' +
-                  'class="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm active:scale-95">' +
-            '<i class="fa-solid fa-triangle-exclamation"></i>' +
-            '<span>Laporkan Kerusakan (Upload Foto)</span>' +
-          '</button>' +
-          '<button onclick="editBuilding(\'' + (bg.gedungId || bg.idGedung) + '\')" class="role-action-btn py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition">' +
-            '<i class="fa-solid fa-pen mr-1"></i>Edit' +
-          '</button>' +
-          '<button onclick="showQRCode(\'' + (bg.gedungId || bg.idGedung) + '\', \'building\')" class="py-2 px-3 rounded-xl bg-cream-200 hover:bg-cream-300 text-slate-700 font-bold text-xs transition flex items-center gap-1.5">' +
-            '<i class="fa-solid fa-print mr-1"></i>Label' +
-          '</button>' +
-        '</div>' +
+      '<div class="flex flex-wrap gap-2 pt-3 border-t border-cream-200">' +
+      '<button onclick="openReportMaintenanceModal(\'' + (bg.gedungId || bg.idGedung) + '\', \'building\')" ' +
+      'class="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm active:scale-95">' +
+      '<i class="fa-solid fa-triangle-exclamation"></i>' +
+      '<span>Laporkan Kerusakan (Upload Foto)</span>' +
+      '</button>' +
+      '<button onclick="editBuilding(\'' + (bg.gedungId || bg.idGedung) + '\')" class="role-action-btn py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition">' +
+      '<i class="fa-solid fa-pen mr-1"></i>Edit' +
+      '</button>' +
+      '<button onclick="showQRCode(\'' + (bg.gedungId || bg.idGedung) + '\', \'building\')" class="py-2 px-3 rounded-xl bg-cream-200 hover:bg-cream-300 text-slate-700 font-bold text-xs transition flex items-center gap-1.5">' +
+      '<i class="fa-solid fa-print mr-1"></i>Label' +
+      '</button>' +
+      '</div>' +
       '</div>';
     applyRolePermissions();
   }
@@ -2192,8 +2197,8 @@
     const historyStack = isRespon ? scanHistoryRespon : scanHistoryMain;
     const backBtnHtml = historyStack.length > 1 ? '<button onclick="goBackScan(\'' + targetContentId + '\')" class="mb-3 px-3 py-1.5 rounded-xl bg-cream-100 hover:bg-cream-200 text-slate-700 text-[11px] font-bold transition flex items-center w-fit shadow-xs"><i class="fa-solid fa-arrow-left mr-1.5"></i>Kembali</button>' : '';
 
-    const parentGedung = DB.buildings.find(function(b) { return String(b.gedungId).toUpperCase() === String(rm.gedungId).toUpperCase(); }) || { namaGedung: rm.namaGedung || '-' };
-    const assetsInRoom = fromServer && rm.daftarAset ? rm.daftarAset : DB.assets.filter(function(a) { return String(a.ruangId).toUpperCase() === String(rId).toUpperCase() && a.statusAset !== 'Dimusnahkan'; });
+    const parentGedung = DB.buildings.find(function (b) { return String(b.gedungId).toUpperCase() === String(rm.gedungId).toUpperCase(); }) || { namaGedung: rm.namaGedung || '-' };
+    const assetsInRoom = fromServer && rm.daftarAset ? rm.daftarAset : DB.assets.filter(function (a) { return String(a.ruangId).toUpperCase() === String(rId).toUpperCase() && a.statusAset !== 'Dimusnahkan'; });
 
     let countBaik = 0, countRusakRingan = 0, countRusakBerat = 0;
     if (fromServer && rm.rekapKondisi) {
@@ -2201,7 +2206,7 @@
       countRusakRingan = rm.rekapKondisi.rusakRingan || 0;
       countRusakBerat = rm.rekapKondisi.rusakBerat || 0;
     } else {
-      assetsInRoom.forEach(function(a) {
+      assetsInRoom.forEach(function (a) {
         const k = (a.kondisi || '').toLowerCase();
         if (k.indexOf('rusak berat') !== -1) countRusakBerat++;
         else if (k.indexOf('rusak') !== -1) countRusakRingan++;
@@ -2218,120 +2223,120 @@
     if (assetsInRoom.length === 0) {
       assetsListHtml = '<p class="p-6 text-center text-xs text-slate-400">Belum ada aset terdaftar yang berlokasi di ruangan ini.</p>';
     } else {
-      assetsListHtml = assetsInRoom.map(function(a) {
+      assetsListHtml = assetsInRoom.map(function (a) {
         let badgeKondisi = 'bg-emerald-50 text-emerald-700 border-emerald-200';
         if ((a.kondisi || '').indexOf('Rusak Ringan') !== -1) badgeKondisi = 'bg-amber-50 text-amber-700 border-amber-200';
         if ((a.kondisi || '').indexOf('Rusak Berat') !== -1) badgeKondisi = 'bg-rose-50 text-rose-700 border-rose-200';
 
         return '<div class="p-3 flex items-center justify-between gap-2 hover:bg-cream-50/50 transition">' +
-            '<div class="min-w-0 flex-1">' +
-              '<div class="flex items-center gap-2">' +
-                '<p class="font-bold text-slate-800 text-xs truncate">' + (a.namaBarang || a.namaAset) + '</p>' +
-                '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold border ' + badgeKondisi + '">' + a.kondisi + '</span>' +
-              '</div>' +
-              '<p class="text-[10px] font-mono dynamic-theme-text mt-0.5">' + (a.kodeBarang || a.idAset) + ' • ' + (a.kategori || '-') + '</p>' +
-              (a.spesifikasi ? '<p class="text-[10px] text-slate-500 truncate mt-0.5">' + a.spesifikasi + '</p>' : '') +
-            '</div>' +
-            '<div class="flex items-center gap-1.5 shrink-0">' +
-              '<button onclick="drillDownScan(\'' + (a.kodeBarang || a.idAset || a.assetId) + '\', \'' + targetContentId + '\')" ' +
-                      'class="px-2.5 py-1 rounded-lg bg-cream-100 hover:bg-cream-200 text-slate-700 text-[10px] font-bold transition">' +
-                'Detail' +
-              '</button>' +
-            '</div>' +
+          '<div class="min-w-0 flex-1">' +
+          '<div class="flex items-center gap-2">' +
+          '<p class="font-bold text-slate-800 text-xs truncate">' + (a.namaBarang || a.namaAset) + '</p>' +
+          '<span class="px-2 py-0.5 rounded-full text-[9px] font-bold border ' + badgeKondisi + '">' + a.kondisi + '</span>' +
+          '</div>' +
+          '<p class="text-[10px] font-mono dynamic-theme-text mt-0.5">' + (a.kodeBarang || a.idAset) + ' • ' + (a.kategori || '-') + '</p>' +
+          (a.spesifikasi ? '<p class="text-[10px] text-slate-500 truncate mt-0.5">' + a.spesifikasi + '</p>' : '') +
+          '</div>' +
+          '<div class="flex items-center gap-1.5 shrink-0">' +
+          '<button onclick="drillDownScan(\'' + (a.kodeBarang || a.idAset || a.assetId) + '\', \'' + targetContentId + '\')" ' +
+          'class="px-2.5 py-1 rounded-lg bg-cream-100 hover:bg-cream-200 text-slate-700 text-[10px] font-bold transition">' +
+          'Detail' +
+          '</button>' +
+          '</div>' +
           '</div>';
       }).join('');
     }
 
-    content.innerHTML = 
+    content.innerHTML =
       '<div class="space-y-4 animate-fadeIn">' + backBtnHtml +
-        '<div class="p-5 rounded-3xl bg-gradient-to-br from-cyan-900 via-sky-950 to-slate-900 text-white shadow-soft relative overflow-hidden">' +
-          '<div class="relative z-10">' +
-            '<div class="flex items-center justify-between gap-2">' +
-              '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/20 backdrop-blur-md text-cyan-200 border border-white/20">' +
-                '<i class="fa-solid fa-door-open"></i>' +
-                '<span>Ruangan Terverifikasi</span>' +
-              '</span>' +
-              '<span class="text-xs font-mono font-bold bg-cyan-500/30 px-2.5 py-1 rounded-lg border border-cyan-400/30">' + (rm.kodeRuang || '-') + '</span>' +
-            '</div>' +
-            '<h3 class="text-lg sm:text-xl font-black mt-2 leading-tight">' + rm.namaRuang + '</h3>' +
-            '<p class="text-xs text-cyan-200/90 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">' +
-              '<span><i class="fa-solid fa-school text-cyan-300 mr-1"></i>' + parentGedung.namaGedung + '</span>' +
-              '<span><i class="fa-solid fa-stairs text-cyan-300 mr-1"></i>Lantai ' + (rm.lantai || 1) + '</span>' +
-              '<span><i class="fa-solid fa-users text-cyan-300 mr-1"></i>Kapasitas: ' + (rm.kapasitas || 0) + ' Orang</span>' +
-            '</p>' +
-            '<div class="mt-2.5 flex flex-wrap gap-2 text-[11px] text-cyan-100">' +
-              '<span class="bg-white/10 px-2.5 py-1 rounded-lg"><strong>PJ:</strong> ' + (rm.penanggungJawab || rm.pic || '-') + '</span>' +
-              '<span class="bg-white/10 px-2.5 py-1 rounded-lg"><strong>Fungsi:</strong> ' + (rm.jenisRuang || 'Ruang Belajar') + '</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-cyan-500/20 rounded-full blur-xl pointer-events-none"></div>' +
-        '</div>' +
+      '<div class="p-5 rounded-3xl bg-gradient-to-br from-cyan-900 via-sky-950 to-slate-900 text-white shadow-soft relative overflow-hidden">' +
+      '<div class="relative z-10">' +
+      '<div class="flex items-center justify-between gap-2">' +
+      '<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-white/20 backdrop-blur-md text-cyan-200 border border-white/20">' +
+      '<i class="fa-solid fa-door-open"></i>' +
+      '<span>Ruangan Terverifikasi</span>' +
+      '</span>' +
+      '<span class="text-xs font-mono font-bold bg-cyan-500/30 px-2.5 py-1 rounded-lg border border-cyan-400/30">' + (rm.kodeRuang || '-') + '</span>' +
+      '</div>' +
+      '<h3 class="text-lg sm:text-xl font-black mt-2 leading-tight">' + rm.namaRuang + '</h3>' +
+      '<p class="text-xs text-cyan-200/90 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">' +
+      '<span><i class="fa-solid fa-school text-cyan-300 mr-1"></i>' + parentGedung.namaGedung + '</span>' +
+      '<span><i class="fa-solid fa-stairs text-cyan-300 mr-1"></i>Lantai ' + (rm.lantai || 1) + '</span>' +
+      '<span><i class="fa-solid fa-users text-cyan-300 mr-1"></i>Kapasitas: ' + (rm.kapasitas || 0) + ' Orang</span>' +
+      '</p>' +
+      '<div class="mt-2.5 flex flex-wrap gap-2 text-[11px] text-cyan-100">' +
+      '<span class="bg-white/10 px-2.5 py-1 rounded-lg"><strong>PJ:</strong> ' + (rm.penanggungJawab || rm.pic || '-') + '</span>' +
+      '<span class="bg-white/10 px-2.5 py-1 rounded-lg"><strong>Fungsi:</strong> ' + (rm.jenisRuang || 'Ruang Belajar') + '</span>' +
+      '</div>' +
+      '</div>' +
+      '<div class="absolute -right-6 -bottom-6 w-32 h-32 bg-cyan-500/20 rounded-full blur-xl pointer-events-none"></div>' +
+      '</div>' +
 
-        '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">' +
-          '<div class="p-3 bg-cream-50 rounded-2xl border border-cream-200">' +
-            '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Aset</p>' +
-            '<h4 class="text-base font-extrabold text-slate-800 mt-0.5">' + totalAset + '</h4>' +
-            '<span class="text-[9px] text-cyan-700 font-semibold">Item Sarpras</span>' +
-          '</div>' +
-          '<div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200">' +
-            '<p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Kondisi Baik</p>' +
-            '<h4 class="text-base font-extrabold text-emerald-700 mt-0.5">' + countBaik + '</h4>' +
-            '<span class="text-[9px] text-emerald-600 font-semibold">' + pBaik + '% Baik</span>' +
-          '</div>' +
-          '<div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200">' +
-            '<p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Rusak Ringan</p>' +
-            '<h4 class="text-base font-extrabold text-amber-700 mt-0.5">' + countRusakRingan + '</h4>' +
-            '<span class="text-[9px] text-amber-600 font-semibold">Bisa Dipakai</span>' +
-          '</div>' +
-          '<div class="p-3 bg-rose-50/70 rounded-2xl border border-rose-200">' +
-            '<p class="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Rusak Berat</p>' +
-            '<h4 class="text-base font-extrabold text-rose-700 mt-0.5">' + countRusakBerat + '</h4>' +
-            '<span class="text-[9px] text-rose-600 font-semibold">Perlu Servis</span>' +
-          '</div>' +
-        '</div>' +
+      '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">' +
+      '<div class="p-3 bg-cream-50 rounded-2xl border border-cream-200">' +
+      '<p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Aset</p>' +
+      '<h4 class="text-base font-extrabold text-slate-800 mt-0.5">' + totalAset + '</h4>' +
+      '<span class="text-[9px] text-cyan-700 font-semibold">Item Sarpras</span>' +
+      '</div>' +
+      '<div class="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200">' +
+      '<p class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Kondisi Baik</p>' +
+      '<h4 class="text-base font-extrabold text-emerald-700 mt-0.5">' + countBaik + '</h4>' +
+      '<span class="text-[9px] text-emerald-600 font-semibold">' + pBaik + '% Baik</span>' +
+      '</div>' +
+      '<div class="p-3 bg-amber-50/70 rounded-2xl border border-amber-200">' +
+      '<p class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Rusak Ringan</p>' +
+      '<h4 class="text-base font-extrabold text-amber-700 mt-0.5">' + countRusakRingan + '</h4>' +
+      '<span class="text-[9px] text-amber-600 font-semibold">Bisa Dipakai</span>' +
+      '</div>' +
+      '<div class="p-3 bg-rose-50/70 rounded-2xl border border-rose-200">' +
+      '<p class="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Rusak Berat</p>' +
+      '<h4 class="text-base font-extrabold text-rose-700 mt-0.5">' + countRusakBerat + '</h4>' +
+      '<span class="text-[9px] text-rose-600 font-semibold">Perlu Servis</span>' +
+      '</div>' +
+      '</div>' +
 
-        '<div class="p-4 bg-white rounded-2xl border border-cream-200 shadow-xs space-y-2">' +
-          '<div class="flex items-center justify-between text-xs">' +
-            '<span class="font-bold text-slate-700 flex items-center gap-1.5">' +
-              '<i class="fa-solid fa-chart-column dynamic-theme-text"></i>' +
-              '<span>Status Kelaikan Aset di Ruangan Ini</span>' +
-            '</span>' +
-            '<span class="text-[11px] font-bold text-slate-700">' + totalAset + ' Total Unit</span>' +
-          '</div>' +
-          '<div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">' +
-            '<div style="width: ' + pBaik + '%" class="bg-emerald-500 h-full transition-all duration-500"></div>' +
-            '<div style="width: ' + pRusak + '%" class="bg-amber-400 h-full transition-all duration-500"></div>' +
-            '<div style="width: ' + pBerat + '%" class="bg-rose-500 h-full transition-all duration-500"></div>' +
-          '</div>' +
-        '</div>' +
+      '<div class="p-4 bg-white rounded-2xl border border-cream-200 shadow-xs space-y-2">' +
+      '<div class="flex items-center justify-between text-xs">' +
+      '<span class="font-bold text-slate-700 flex items-center gap-1.5">' +
+      '<i class="fa-solid fa-chart-column dynamic-theme-text"></i>' +
+      '<span>Status Kelaikan Aset di Ruangan Ini</span>' +
+      '</span>' +
+      '<span class="text-[11px] font-bold text-slate-700">' + totalAset + ' Total Unit</span>' +
+      '</div>' +
+      '<div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">' +
+      '<div style="width: ' + pBaik + '%" class="bg-emerald-500 h-full transition-all duration-500"></div>' +
+      '<div style="width: ' + pRusak + '%" class="bg-amber-400 h-full transition-all duration-500"></div>' +
+      '<div style="width: ' + pBerat + '%" class="bg-rose-500 h-full transition-all duration-500"></div>' +
+      '</div>' +
+      '</div>' +
 
-        '<div class="space-y-2.5 pt-2">' +
-          '<div class="flex items-center justify-between">' +
-            '<h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">' +
-              '<i class="fa-solid fa-boxes-stacked dynamic-theme-text"></i>' +
-              '<span>Inventaris Aset di Ruangan Ini (' + assetsInRoom.length + ')</span>' +
-            '</h4>' +
-            '<span class="text-[10px] text-slate-400">Rincian Fisik</span>' +
-          '</div>' +
+      '<div class="space-y-2.5 pt-2">' +
+      '<div class="flex items-center justify-between">' +
+      '<h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">' +
+      '<i class="fa-solid fa-boxes-stacked dynamic-theme-text"></i>' +
+      '<span>Inventaris Aset di Ruangan Ini (' + assetsInRoom.length + ')</span>' +
+      '</h4>' +
+      '<span class="text-[10px] text-slate-400">Rincian Fisik</span>' +
+      '</div>' +
 
-          '<div class="divide-y divide-cream-100 bg-white rounded-2xl border border-cream-200 shadow-xs max-h-72 overflow-y-auto">' +
-            assetsListHtml +
-          '</div>' +
-        '</div>' +
+      '<div class="divide-y divide-cream-100 bg-white rounded-2xl border border-cream-200 shadow-xs max-h-72 overflow-y-auto">' +
+      assetsListHtml +
+      '</div>' +
+      '</div>' +
 
-        '<div class="flex flex-wrap gap-2 pt-3 border-t border-cream-200">' +
-          '<button onclick="openReportMaintenanceModal(\'' + (rm.ruangId || rm.idRuang) + '\', \'room\')" ' +
-                  'class="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm active:scale-95">' +
-            '<i class="fa-solid fa-triangle-exclamation"></i>' +
-            '<span>Laporkan Kerusakan (Upload Foto)</span>' +
-          '</button>' +
-          '<button onclick="editRoom(\'' + (rm.ruangId || rm.idRuang) + '\')" class="role-action-btn py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition">' +
-            '<i class="fa-solid fa-pen mr-1"></i>Edit' +
-          '</button>' +
-          '<button onclick="showQRCode(\'' + (rm.ruangId || rm.idRuang) + '\', \'room\')" class="py-2 px-3 rounded-xl bg-cream-200 hover:bg-cream-300 text-slate-700 font-bold text-xs transition flex items-center gap-1.5">' +
-            '<i class="fa-solid fa-print mr-1"></i>Label' +
-          '</button>' +
-        '</div>' +
+      '<div class="flex flex-wrap gap-2 pt-3 border-t border-cream-200">' +
+      '<button onclick="openReportMaintenanceModal(\'' + (rm.ruangId || rm.idRuang) + '\', \'room\')" ' +
+      'class="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm active:scale-95">' +
+      '<i class="fa-solid fa-triangle-exclamation"></i>' +
+      '<span>Laporkan Kerusakan (Upload Foto)</span>' +
+      '</button>' +
+      '<button onclick="editRoom(\'' + (rm.ruangId || rm.idRuang) + '\')" class="role-action-btn py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition">' +
+      '<i class="fa-solid fa-pen mr-1"></i>Edit' +
+      '</button>' +
+      '<button onclick="showQRCode(\'' + (rm.ruangId || rm.idRuang) + '\', \'room\')" class="py-2 px-3 rounded-xl bg-cream-200 hover:bg-cream-300 text-slate-700 font-bold text-xs transition flex items-center gap-1.5">' +
+      '<i class="fa-solid fa-print mr-1"></i>Label' +
+      '</button>' +
+      '</div>' +
       '</div>';
     applyRolePermissions();
   }
@@ -2341,8 +2346,8 @@
     targetContentId = targetContentId || 'scanResultContent';
     const content = document.getElementById(targetContentId);
     if (!content) return;
-    const bg = DB.buildings.find(function(b) { return String(b.gedungId).toUpperCase() === String(ast.gedungId).toUpperCase(); }) || { namaGedung: ast.namaGedung || '-' };
-    const rm = DB.rooms.find(function(r) { return String(r.ruangId).toUpperCase() === String(ast.ruangId).toUpperCase(); }) || { namaRuang: ast.namaRuang || '-' };
+    const bg = DB.buildings.find(function (b) { return String(b.gedungId).toUpperCase() === String(ast.gedungId).toUpperCase(); }) || { namaGedung: ast.namaGedung || '-' };
+    const rm = DB.rooms.find(function (r) { return String(r.ruangId).toUpperCase() === String(ast.ruangId).toUpperCase(); }) || { namaRuang: ast.namaRuang || '-' };
 
     const isRespon = targetContentId === 'scanResultContentRespon';
     const historyStack = isRespon ? scanHistoryRespon : scanHistoryMain;
@@ -2352,57 +2357,57 @@
     if ((ast.kondisi || '').indexOf('Rusak Ringan') !== -1) badgeKondisi = 'bg-amber-100 text-amber-800 border-amber-200';
     if ((ast.kondisi || '').indexOf('Rusak Berat') !== -1) badgeKondisi = 'bg-rose-100 text-rose-800 border-rose-200';
 
-    content.innerHTML = 
+    content.innerHTML =
       '<div class="animate-fadeIn">' + backBtnHtml +
       '<div class="p-5 rounded-2xl bg-cream-50 border dynamic-theme-border space-y-3.5">' +
-        '<div class="flex items-start justify-between gap-2">' +
-          '<div>' +
-            '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold dynamic-theme-bg-light dynamic-theme-text border dynamic-theme-border">Aset Sarpras Terverifikasi</span>' +
-            '<h3 class="font-extrabold text-slate-800 text-base mt-1.5">' + (ast.namaBarang || ast.namaAset) + '</h3>' +
-            '<p class="text-xs font-mono dynamic-theme-text font-bold">' + (ast.kodeBarang || ast.idAset) + '</p>' +
-          '</div>' +
-          '<span class="px-3 py-1 rounded-full text-xs font-bold border ' + badgeKondisi + '">' + ast.kondisi + '</span>' +
-        '</div>' +
+      '<div class="flex items-start justify-between gap-2">' +
+      '<div>' +
+      '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold dynamic-theme-bg-light dynamic-theme-text border dynamic-theme-border">Aset Sarpras Terverifikasi</span>' +
+      '<h3 class="font-extrabold text-slate-800 text-base mt-1.5">' + (ast.namaBarang || ast.namaAset) + '</h3>' +
+      '<p class="text-xs font-mono dynamic-theme-text font-bold">' + (ast.kodeBarang || ast.idAset) + '</p>' +
+      '</div>' +
+      '<span class="px-3 py-1 rounded-full text-xs font-bold border ' + badgeKondisi + '">' + ast.kondisi + '</span>' +
+      '</div>' +
 
-        '<div class="grid grid-cols-2 gap-2.5 text-xs text-slate-600 pt-2 border-t border-cream-200">' +
-          '<div><span class="text-slate-400 block text-[10px]">Lokasi Gedung:</span><span class="font-semibold text-slate-800">' + bg.namaGedung + '</span></div>' +
-          '<div><span class="text-slate-400 block text-[10px]">Ruangan:</span><span class="font-semibold text-slate-800">' + rm.namaRuang + '</span></div>' +
-          '<div><span class="text-slate-400 block text-[10px]">Jumlah:</span><span class="font-semibold text-slate-800">' + (ast.jumlah || 1) + ' ' + (ast.satuan || 'Unit') + '</span></div>' +
-          '<div><span class="text-slate-400 block text-[10px]">PJ Pengelola:</span><span class="font-semibold text-slate-800">' + (ast.penanggungJawab || '-') + '</span></div>' +
-        '</div>' +
+      '<div class="grid grid-cols-2 gap-2.5 text-xs text-slate-600 pt-2 border-t border-cream-200">' +
+      '<div><span class="text-slate-400 block text-[10px]">Lokasi Gedung:</span><span class="font-semibold text-slate-800">' + bg.namaGedung + '</span></div>' +
+      '<div><span class="text-slate-400 block text-[10px]">Ruangan:</span><span class="font-semibold text-slate-800">' + rm.namaRuang + '</span></div>' +
+      '<div><span class="text-slate-400 block text-[10px]">Jumlah:</span><span class="font-semibold text-slate-800">' + (ast.jumlah || 1) + ' ' + (ast.satuan || 'Unit') + '</span></div>' +
+      '<div><span class="text-slate-400 block text-[10px]">PJ Pengelola:</span><span class="font-semibold text-slate-800">' + (ast.penanggungJawab || '-') + '</span></div>' +
+      '</div>' +
 
-        (ast.spesifikasi ? '<p class="text-[11px] text-slate-600 bg-white p-2.5 rounded-xl border border-cream-200"><strong>Spesifikasi:</strong> ' + ast.spesifikasi + '</p>' : '') +
+      (ast.spesifikasi ? '<p class="text-[11px] text-slate-600 bg-white p-2.5 rounded-xl border border-cream-200"><strong>Spesifikasi:</strong> ' + ast.spesifikasi + '</p>' : '') +
 
-        '<div class="flex flex-wrap gap-2 pt-2 border-t border-cream-200">' +
-          '<button onclick="openReportMaintenanceModal(\'' + (ast.assetId || ast.idAset) + '\', \'asset\')" class="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm active:scale-95">' +
-            '<i class="fa-solid fa-triangle-exclamation"></i><span>Laporkan Kerusakan (Upload Foto)</span>' +
-          '</button>' +
-          '<button onclick="editAsset(\'' + (ast.assetId || ast.idAset) + '\')" class="role-action-btn py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition">' +
-            '<i class="fa-solid fa-pen mr-1"></i>Edit' +
-          '</button>' +
-          '<button onclick="showQRCode(\'' + (ast.assetId || ast.idAset) + '\', \'asset\')" class="py-2 px-3 rounded-xl bg-cream-200 hover:bg-cream-300 text-slate-700 font-bold text-xs transition">' +
-            '<i class="fa-solid fa-print mr-1"></i>Label' +
-          '</button>' +
-        '</div>' +
-    '</div></div>';
-  applyRolePermissions();
+      '<div class="flex flex-wrap gap-2 pt-2 border-t border-cream-200">' +
+      '<button onclick="openReportMaintenanceModal(\'' + (ast.assetId || ast.idAset) + '\', \'asset\')" class="flex-1 py-2 px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition flex items-center justify-center space-x-1.5 shadow-sm active:scale-95">' +
+      '<i class="fa-solid fa-triangle-exclamation"></i><span>Laporkan Kerusakan (Upload Foto)</span>' +
+      '</button>' +
+      '<button onclick="editAsset(\'' + (ast.assetId || ast.idAset) + '\')" class="role-action-btn py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition">' +
+      '<i class="fa-solid fa-pen mr-1"></i>Edit' +
+      '</button>' +
+      '<button onclick="showQRCode(\'' + (ast.assetId || ast.idAset) + '\', \'asset\')" class="py-2 px-3 rounded-xl bg-cream-200 hover:bg-cream-300 text-slate-700 font-bold text-xs transition">' +
+      '<i class="fa-solid fa-print mr-1"></i>Label' +
+      '</button>' +
+      '</div>' +
+      '</div></div>';
+    applyRolePermissions();
   }
 
   function renderUnknownCode(code, targetContentId) {
     targetContentId = targetContentId || 'scanResultContent';
     const content = document.getElementById(targetContentId);
     if (!content) return;
-    
+
     const isRespon = targetContentId === 'scanResultContentRespon';
     const historyStack = isRespon ? scanHistoryRespon : scanHistoryMain;
     const backBtnHtml = historyStack.length > 1 ? '<button onclick="goBackScan(\'' + targetContentId + '\')" class="mb-3 px-3 py-1.5 rounded-xl bg-white border border-rose-200 hover:bg-rose-100 text-slate-700 text-[11px] font-bold transition flex items-center w-fit shadow-xs"><i class="fa-solid fa-arrow-left mr-1.5"></i>Kembali</button>' : '';
 
-    content.innerHTML = 
+    content.innerHTML =
       '<div class="animate-fadeIn">' + backBtnHtml +
       '<div class="p-6 text-center text-rose-600 bg-rose-50 rounded-2xl border border-rose-200 space-y-2">' +
-        '<i class="fa-solid fa-circle-question text-3xl"></i>' +
-        '<h4 class="font-bold text-sm">Kode Tidak Dikenali</h4>' +
-        '<p class="text-xs text-rose-500">Kode "<strong>' + code + '</strong>" tidak terdaftar pada database Gedung, Ruang, ataupun Aset Sarpras.</p>' +
+      '<i class="fa-solid fa-circle-question text-3xl"></i>' +
+      '<h4 class="font-bold text-sm">Kode Tidak Dikenali</h4>' +
+      '<p class="text-xs text-rose-500">Kode "<strong>' + code + '</strong>" tidak terdaftar pada database Gedung, Ruang, ataupun Aset Sarpras.</p>' +
       '</div></div>';
   }
 
@@ -2412,22 +2417,22 @@
     let subtitle = '';
 
     if (type === 'asset') {
-      const a = DB.assets.find(function(item) { return item.assetId === id || item.kodeBarang === id; });
+      const a = DB.assets.find(function (item) { return item.assetId === id || item.kodeBarang === id; });
       if (!a) return;
       code = a.kodeBarang;
       title = a.namaBarang;
-      const bg = DB.buildings.find(function(b) { return b.gedungId === a.gedungId; })?.namaGedung || '';
-      const rm = DB.rooms.find(function(r) { return r.ruangId === a.ruangId; })?.namaRuang || '';
+      const bg = DB.buildings.find(function (b) { return b.gedungId === a.gedungId; })?.namaGedung || '';
+      const rm = DB.rooms.find(function (r) { return r.ruangId === a.ruangId; })?.namaRuang || '';
       subtitle = bg + ' • ' + rm;
     } else if (type === 'room') {
-      const r = DB.rooms.find(function(item) { return item.ruangId === id || item.kodeRuang === id; });
+      const r = DB.rooms.find(function (item) { return item.ruangId === id || item.kodeRuang === id; });
       if (!r) return;
       code = r.kodeRuang;
       title = r.namaRuang;
-      const bg = DB.buildings.find(function(b) { return b.gedungId === r.gedungId; })?.namaGedung || '';
+      const bg = DB.buildings.find(function (b) { return b.gedungId === r.gedungId; })?.namaGedung || '';
       subtitle = bg + ' • Lantai ' + r.lantai;
     } else if (type === 'building') {
-      const b = DB.buildings.find(function(item) { return item.gedungId === id || item.kodeGedung === id; });
+      const b = DB.buildings.find(function (item) { return item.gedungId === id || item.kodeGedung === id; });
       if (!b) return;
       code = b.kodeGedung;
       title = b.namaGedung;
@@ -2460,16 +2465,16 @@
 
     if (selKat) {
       const kategoriMap = {};
-      DB.assets.forEach(function(a) {
+      DB.assets.forEach(function (a) {
         if (a.kategori) kategoriMap[a.kategori.trim()] = true;
       });
-      selKat.innerHTML = '<option value="">-- Semua Kategori --</option>' + 
-        Object.keys(kategoriMap).sort().map(function(k) { return '<option value="' + k + '">' + k + '</option>'; }).join('');
+      selKat.innerHTML = '<option value="">-- Semua Kategori --</option>' +
+        Object.keys(kategoriMap).sort().map(function (k) { return '<option value="' + k + '">' + k + '</option>'; }).join('');
     }
 
     if (selGdg) {
-      selGdg.innerHTML = '<option value="">-- Semua Gedung --</option>' + 
-        DB.buildings.map(function(b) { return '<option value="' + b.gedungId + '">' + b.namaGedung + ' (' + b.kodeGedung + ')</option>'; }).join('');
+      selGdg.innerHTML = '<option value="">-- Semua Gedung --</option>' +
+        DB.buildings.map(function (b) { return '<option value="' + b.gedungId + '">' + b.namaGedung + ' (' + b.kodeGedung + ')</option>'; }).join('');
     }
 
     if (selRng) {
@@ -2483,11 +2488,11 @@
 
     let rooms = DB.rooms;
     if (filterGedungId) {
-      rooms = DB.rooms.filter(function(r) { return String(r.gedungId).toUpperCase() === String(filterGedungId).toUpperCase(); });
+      rooms = DB.rooms.filter(function (r) { return String(r.gedungId).toUpperCase() === String(filterGedungId).toUpperCase(); });
     }
 
-    selRng.innerHTML = '<option value="">-- Semua Ruang --</option>' + 
-      rooms.map(function(r) { return '<option value="' + r.ruangId + '">' + r.namaRuang + ' (' + r.kodeRuang + ')</option>'; }).join('');
+    selRng.innerHTML = '<option value="">-- Semua Ruang --</option>' +
+      rooms.map(function (r) { return '<option value="' + r.ruangId + '">' + r.namaRuang + ' (' + r.kodeRuang + ')</option>'; }).join('');
   }
 
   function handleCetakTipeChange() {
@@ -2552,24 +2557,24 @@
     const countBadge = document.getElementById('labelCetakCount');
     if (!grid) return;
 
-    grid.innerHTML = 
+    grid.innerHTML =
       '<div class="col-span-full py-16 text-center text-slate-400 text-xs">' +
-        '<i class="fa-solid fa-spinner fa-spin text-2xl dynamic-theme-text mb-2 block"></i>' +
-        '<span>Memuat data stiker QR-Code...</span>' +
+      '<i class="fa-solid fa-spinner fa-spin text-2xl dynamic-theme-text mb-2 block"></i>' +
+      '<span>Memuat data stiker QR-Code...</span>' +
       '</div>';
 
     let items = [];
 
     if (tipe === 'aset') {
-      items = DB.assets.filter(function(a) {
+      items = DB.assets.filter(function (a) {
         if (a.statusAset === 'Dimusnahkan') return false;
         const matchKat = !kat || (a.kategori || '').toLowerCase().trim() === kat;
         const matchGdg = !gdg || String(a.gedungId).toLowerCase().trim() === gdg;
         const matchRng = !rng || String(a.ruangId).toLowerCase().trim() === rng;
         return matchKat && matchGdg && matchRng;
-      }).map(function(a) {
-        const pGdg = DB.buildings.find(function(b) { return String(b.gedungId).toLowerCase() === String(a.gedungId).toLowerCase(); });
-        const pRng = DB.rooms.find(function(r) { return String(r.ruangId).toLowerCase() === String(a.ruangId).toLowerCase(); });
+      }).map(function (a) {
+        const pGdg = DB.buildings.find(function (b) { return String(b.gedungId).toLowerCase() === String(a.gedungId).toLowerCase(); });
+        const pRng = DB.rooms.find(function (r) { return String(r.ruangId).toLowerCase() === String(a.ruangId).toLowerCase(); });
         return {
           id: a.assetId,
           kode: a.kodeBarang,
@@ -2582,12 +2587,12 @@
         };
       });
     } else if (tipe === 'ruang') {
-      items = DB.rooms.filter(function(r) {
+      items = DB.rooms.filter(function (r) {
         const matchGdg = !gdg || String(r.gedungId).toLowerCase().trim() === gdg;
         const matchRng = !rng || String(r.ruangId).toLowerCase().trim() === rng;
         return matchGdg && matchRng;
-      }).map(function(r) {
-        const pGdg = DB.buildings.find(function(b) { return String(b.gedungId).toLowerCase() === String(r.gedungId).toLowerCase(); });
+      }).map(function (r) {
+        const pGdg = DB.buildings.find(function (b) { return String(b.gedungId).toLowerCase() === String(r.gedungId).toLowerCase(); });
         return {
           id: r.ruangId,
           kode: r.kodeRuang,
@@ -2600,9 +2605,9 @@
         };
       });
     } else if (tipe === 'gedung') {
-      items = DB.buildings.filter(function(b) {
+      items = DB.buildings.filter(function (b) {
         return !gdg || String(b.gedungId).toLowerCase().trim() === gdg;
-      }).map(function(b) {
+      }).map(function (b) {
         return {
           id: b.gedungId,
           kode: b.kodeGedung,
@@ -2619,11 +2624,11 @@
     if (countBadge) countBadge.innerText = items.length;
 
     if (items.length === 0) {
-      grid.innerHTML = 
+      grid.innerHTML =
         '<div class="col-span-full py-16 text-center text-slate-400 text-xs">' +
-          '<i class="fa-solid fa-box-open text-3xl text-slate-300 mb-2 block"></i>' +
-          '<p class="font-bold text-slate-700">Tidak ada data yang sesuai filter</p>' +
-          '<p class="text-[11px] text-slate-400 mt-1">Coba sesuaikan pilihan filter kategori, gedung, atau ruang Anda.</p>' +
+        '<i class="fa-solid fa-box-open text-3xl text-slate-300 mb-2 block"></i>' +
+        '<p class="font-bold text-slate-700">Tidak ada data yang sesuai filter</p>' +
+        '<p class="text-[11px] text-slate-400 mt-1">Coba sesuaikan pilihan filter kategori, gedung, atau ruang Anda.</p>' +
         '</div>';
       return;
     }
@@ -2631,29 +2636,29 @@
     grid.innerHTML = '';
     const schoolName = DB.settings.schoolName || 'DIGITAS SARPRAS';
 
-    items.forEach(function(item, idx) {
+    items.forEach(function (item, idx) {
       const card = document.createElement('div');
       card.className = 'border-2 border-dashed border-slate-300 rounded-xl p-3 bg-white text-slate-800 flex flex-col justify-between break-inside-avoid shadow-xs';
-      
+
       const qrBoxId = 'qr_batch_' + idx;
-      card.innerHTML = 
+      card.innerHTML =
         '<div class="border-b border-slate-200 pb-1.5 mb-1.5 text-center">' +
-          '<p class="text-[9px] font-black uppercase tracking-wider text-slate-900 line-clamp-1">' + schoolName + '</p>' +
-          '<span class="text-[8px] font-bold text-slate-500 uppercase tracking-widest">' + item.tipeLabel + '</span>' +
+        '<p class="text-[9px] font-black uppercase tracking-wider text-slate-900 line-clamp-1">' + schoolName + '</p>' +
+        '<span class="text-[8px] font-bold text-slate-500 uppercase tracking-widest">' + item.tipeLabel + '</span>' +
         '</div>' +
         '<div class="flex items-center justify-center my-1">' +
-          '<div id="' + qrBoxId + '" class="p-1 bg-white border border-slate-200 rounded-lg flex items-center justify-center"></div>' +
+        '<div id="' + qrBoxId + '" class="p-1 bg-white border border-slate-200 rounded-lg flex items-center justify-center"></div>' +
         '</div>' +
         '<div class="text-center pt-1 border-t border-slate-100 mt-1 space-y-0.5">' +
-          '<p class="text-[11px] font-mono font-extrabold text-slate-900 tracking-wider">' + item.kode + '</p>' +
-          '<p class="text-[10px] font-bold text-slate-800 line-clamp-1 leading-tight">' + item.nama + '</p>' +
-          '<p class="text-[8.5px] text-slate-500 line-clamp-1 leading-tight">' + item.sub + '</p>' +
-          '<p class="text-[8px] font-semibold text-slate-600 line-clamp-1 leading-tight"><i class="fa-solid fa-location-dot mr-1"></i>' + item.lokasi + '</p>' +
+        '<p class="text-[11px] font-mono font-extrabold text-slate-900 tracking-wider">' + item.kode + '</p>' +
+        '<p class="text-[10px] font-bold text-slate-800 line-clamp-1 leading-tight">' + item.nama + '</p>' +
+        '<p class="text-[8.5px] text-slate-500 line-clamp-1 leading-tight">' + item.sub + '</p>' +
+        '<p class="text-[8px] font-semibold text-slate-600 line-clamp-1 leading-tight"><i class="fa-solid fa-location-dot mr-1"></i>' + item.lokasi + '</p>' +
         '</div>';
 
       grid.appendChild(card);
 
-      setTimeout(function() {
+      setTimeout(function () {
         const qrEl = document.getElementById(qrBoxId);
         if (qrEl) {
           new QRCode(qrEl, {
@@ -2671,29 +2676,29 @@
 
   function renderBuildingsView() {
     const container = document.getElementById('buildingsContainer');
-    container.innerHTML = DB.buildings.map(function(b) {
-      const roomsCount = DB.rooms.filter(function(r) { return r.gedungId === b.gedungId; }).length;
+    container.innerHTML = DB.buildings.map(function (b) {
+      const roomsCount = DB.rooms.filter(function (r) { return r.gedungId === b.gedungId; }).length;
       return '<div class="bg-white rounded-2xl border border-cream-200/80 p-5 shadow-soft flex flex-col justify-between space-y-3">' +
         '<div>' +
-          '<div class="flex items-start justify-between">' +
-            '<div>' +
-              '<h3 class="font-bold text-slate-800 text-sm">' + b.namaGedung + '</h3>' +
-              '<p class="text-xs font-mono dynamic-theme-text font-bold">' + b.kodeGedung + '</p>' +
-            '</div>' +
-            '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cream-100 text-slate-700">' + b.kondisi + '</span>' +
-          '</div>' +
-          '<div class="grid grid-cols-2 gap-2 text-xs text-slate-600 mt-3 pt-3 border-t border-cream-100">' +
-            '<div><span class="text-slate-400 block text-[10px]">Fungsi:</span>' + b.jenisBangunan + '</div>' +
-            '<div><span class="text-slate-400 block text-[10px]">Luas:</span>' + b.luas + ' m² (' + b.jumlahLantai + ' Lt)</div>' +
-            '<div><span class="text-slate-400 block text-[10px]">Tahun Bangun:</span>' + b.tahunDibangun + '</div>' +
-            '<div><span class="text-slate-400 block text-[10px]">Ruang Terhubung:</span><strong class="text-slate-800">' + roomsCount + ' Ruang</strong></div>' +
-          '</div>' +
+        '<div class="flex items-start justify-between">' +
+        '<div>' +
+        '<h3 class="font-bold text-slate-800 text-sm">' + b.namaGedung + '</h3>' +
+        '<p class="text-xs font-mono dynamic-theme-text font-bold">' + b.kodeGedung + '</p>' +
+        '</div>' +
+        '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-cream-100 text-slate-700">' + b.kondisi + '</span>' +
+        '</div>' +
+        '<div class="grid grid-cols-2 gap-2 text-xs text-slate-600 mt-3 pt-3 border-t border-cream-100">' +
+        '<div><span class="text-slate-400 block text-[10px]">Fungsi:</span>' + b.jenisBangunan + '</div>' +
+        '<div><span class="text-slate-400 block text-[10px]">Luas:</span>' + b.luas + ' m² (' + b.jumlahLantai + ' Lt)</div>' +
+        '<div><span class="text-slate-400 block text-[10px]">Tahun Bangun:</span>' + b.tahunDibangun + '</div>' +
+        '<div><span class="text-slate-400 block text-[10px]">Ruang Terhubung:</span><strong class="text-slate-800">' + roomsCount + ' Ruang</strong></div>' +
+        '</div>' +
         '</div>' +
         '<div class="pt-3 border-t border-cream-100 flex justify-end space-x-1.5">' +
-          '<button onclick="showQRCode(\'' + b.gedungId + '\', \'building\')" class="px-2.5 py-1 rounded-xl bg-cream-100 hover:bg-cream-200 text-xs font-bold text-slate-700"><i class="fa-solid fa-qrcode mr-1"></i>QR</button>' +
-          '<button onclick="editBuilding(\'' + b.gedungId + '\')" class="role-action-btn px-2.5 py-1 rounded-xl dynamic-theme-btn text-white text-xs font-bold"><i class="fa-solid fa-pen mr-1"></i>Edit</button>' +
+        '<button onclick="showQRCode(\'' + b.gedungId + '\', \'building\')" class="px-2.5 py-1 rounded-xl bg-cream-100 hover:bg-cream-200 text-xs font-bold text-slate-700"><i class="fa-solid fa-qrcode mr-1"></i>QR</button>' +
+        '<button onclick="editBuilding(\'' + b.gedungId + '\')" class="role-action-btn px-2.5 py-1 rounded-xl dynamic-theme-btn text-white text-xs font-bold"><i class="fa-solid fa-pen mr-1"></i>Edit</button>' +
         '</div>' +
-      '</div>';
+        '</div>';
     }).join('');
     applyRolePermissions();
   }
@@ -2701,7 +2706,7 @@
   function openBuildingModal(buildingId) {
     document.getElementById('formBuilding').reset();
     if (buildingId) {
-      const b = DB.buildings.find(function(item) { return item.gedungId === buildingId; });
+      const b = DB.buildings.find(function (item) { return item.gedungId === buildingId; });
       if (!b) return;
       document.getElementById('modalBuildingTitle').innerText = 'Edit Data Gedung';
       document.getElementById('buildingFormId').value = b.gedungId;
@@ -2741,7 +2746,7 @@
     };
 
     if (id) {
-      const idx = DB.buildings.findIndex(function(b) { return b.gedungId === id; });
+      const idx = DB.buildings.findIndex(function (b) { return b.gedungId === id; });
       if (idx !== -1) DB.buildings[idx] = bData;
     } else {
       DB.buildings.push(bData);
@@ -2754,6 +2759,8 @@
     renderBuildingsView();
     populateGedungFilterDropdown();
     refreshDashboard();
+
+    callBackendApi('saveBuilding', bData);
   }
 
   function renderRoomsView(filterGedungId) {
@@ -2761,38 +2768,38 @@
     const filterPills = document.getElementById('roomGedungFilterPills');
 
     filterPills.innerHTML = '<button onclick="renderRoomsView()" class="px-3 py-1 rounded-xl text-xs font-bold transition ' + (!filterGedungId ? 'dynamic-theme-btn text-white' : 'bg-cream-100 text-slate-700') + '">Semua</button>' +
-      DB.buildings.map(function(b) {
+      DB.buildings.map(function (b) {
         const isSel = b.gedungId === filterGedungId;
         return '<button onclick="renderRoomsView(\'' + b.gedungId + '\')" class="px-3 py-1 rounded-xl text-xs font-bold transition ' + (isSel ? 'dynamic-theme-btn text-white' : 'bg-cream-100 text-slate-700') + '">' + b.namaGedung + '</button>';
       }).join('');
 
-    const filtered = filterGedungId ? DB.rooms.filter(function(r) { return r.gedungId === filterGedungId; }) : DB.rooms;
+    const filtered = filterGedungId ? DB.rooms.filter(function (r) { return r.gedungId === filterGedungId; }) : DB.rooms;
 
-    container.innerHTML = filtered.map(function(r) {
-      const bg = DB.buildings.find(function(b) { return b.gedungId === r.gedungId; }) || { namaGedung: '-' };
-      const assetsCount = DB.assets.filter(function(a) { return a.ruangId === r.ruangId && a.statusAset === 'Aktif'; }).length;
+    container.innerHTML = filtered.map(function (r) {
+      const bg = DB.buildings.find(function (b) { return b.gedungId === r.gedungId; }) || { namaGedung: '-' };
+      const assetsCount = DB.assets.filter(function (a) { return a.ruangId === r.ruangId && a.statusAset === 'Aktif'; }).length;
 
       return '<div class="bg-white rounded-2xl border border-cream-200/80 p-5 shadow-soft flex flex-col justify-between space-y-3">' +
         '<div>' +
-          '<div class="flex items-start justify-between">' +
-            '<div>' +
-              '<h3 class="font-bold text-slate-800 text-sm">' + r.namaRuang + '</h3>' +
-              '<p class="text-xs font-mono dynamic-theme-text font-bold">' + r.kodeRuang + '</p>' +
-            '</div>' +
-            '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cream-100 text-slate-700">' + r.kondisi + '</span>' +
-          '</div>' +
-          '<div class="grid grid-cols-2 gap-2 text-xs text-slate-600 mt-3 pt-3 border-t border-cream-100">' +
-            '<div><span class="text-slate-400 block text-[10px]">Gedung:</span>' + bg.namaGedung + '</div>' +
-            '<div><span class="text-slate-400 block text-[10px]">Lantai / Kapasitas:</span>Lt. ' + r.lantai + ' (' + r.kapasitas + ' Org)</div>' +
-            '<div><span class="text-slate-400 block text-[10px]">PJ Ruangan:</span>' + (r.penanggungJawab || '-') + '</div>' +
-            '<div><span class="text-slate-400 block text-[10px]">Total Aset:</span><strong class="text-slate-800">' + assetsCount + ' Unit</strong></div>' +
-          '</div>' +
+        '<div class="flex items-start justify-between">' +
+        '<div>' +
+        '<h3 class="font-bold text-slate-800 text-sm">' + r.namaRuang + '</h3>' +
+        '<p class="text-xs font-mono dynamic-theme-text font-bold">' + r.kodeRuang + '</p>' +
+        '</div>' +
+        '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cream-100 text-slate-700">' + r.kondisi + '</span>' +
+        '</div>' +
+        '<div class="grid grid-cols-2 gap-2 text-xs text-slate-600 mt-3 pt-3 border-t border-cream-100">' +
+        '<div><span class="text-slate-400 block text-[10px]">Gedung:</span>' + bg.namaGedung + '</div>' +
+        '<div><span class="text-slate-400 block text-[10px]">Lantai / Kapasitas:</span>Lt. ' + r.lantai + ' (' + r.kapasitas + ' Org)</div>' +
+        '<div><span class="text-slate-400 block text-[10px]">PJ Ruangan:</span>' + (r.penanggungJawab || '-') + '</div>' +
+        '<div><span class="text-slate-400 block text-[10px]">Total Aset:</span><strong class="text-slate-800">' + assetsCount + ' Unit</strong></div>' +
+        '</div>' +
         '</div>' +
         '<div class="pt-3 border-t border-cream-100 flex justify-end space-x-1.5">' +
-          '<button onclick="showQRCode(\'' + r.ruangId + '\', \'room\')" class="px-2.5 py-1 rounded-xl bg-cream-100 hover:bg-cream-200 text-xs font-bold text-slate-700"><i class="fa-solid fa-qrcode mr-1"></i>QR</button>' +
-          '<button onclick="editRoom(\'' + r.ruangId + '\')" class="role-action-btn px-2.5 py-1 rounded-xl dynamic-theme-btn text-white text-xs font-bold"><i class="fa-solid fa-pen mr-1"></i>Edit</button>' +
+        '<button onclick="showQRCode(\'' + r.ruangId + '\', \'room\')" class="px-2.5 py-1 rounded-xl bg-cream-100 hover:bg-cream-200 text-xs font-bold text-slate-700"><i class="fa-solid fa-qrcode mr-1"></i>QR</button>' +
+        '<button onclick="editRoom(\'' + r.ruangId + '\')" class="role-action-btn px-2.5 py-1 rounded-xl dynamic-theme-btn text-white text-xs font-bold"><i class="fa-solid fa-pen mr-1"></i>Edit</button>' +
         '</div>' +
-      '</div>';
+        '</div>';
     }).join('');
     applyRolePermissions();
   }
@@ -2800,12 +2807,12 @@
   function openRoomModal(roomId) {
     document.getElementById('formRoom').reset();
     const gdgSelect = document.getElementById('roomFormGedungId');
-    gdgSelect.innerHTML = DB.buildings.map(function(b) {
+    gdgSelect.innerHTML = DB.buildings.map(function (b) {
       return '<option value="' + b.gedungId + '">' + b.namaGedung + ' (' + b.kodeGedung + ')</option>';
     }).join('');
 
     if (roomId) {
-      const r = DB.rooms.find(function(item) { return item.ruangId === roomId; });
+      const r = DB.rooms.find(function (item) { return item.ruangId === roomId; });
       if (!r) return;
       document.getElementById('modalRoomTitle').innerText = 'Edit Data Ruang';
       document.getElementById('roomFormId').value = r.ruangId;
@@ -2845,7 +2852,7 @@
     };
 
     if (id) {
-      const idx = DB.rooms.findIndex(function(r) { return r.ruangId === id; });
+      const idx = DB.rooms.findIndex(function (r) { return r.ruangId === id; });
       if (idx !== -1) DB.rooms[idx] = rData;
     } else {
       DB.rooms.push(rData);
@@ -2857,21 +2864,23 @@
     showToast('Data ruang berhasil disimpan!');
     renderRoomsView();
     refreshDashboard();
+
+    callBackendApi('saveRoom', rData);
   }
 
   function renderUsersView() {
     const tbody = document.getElementById('usersTableBody');
-    tbody.innerHTML = DB.users.map(function(u) {
+    tbody.innerHTML = DB.users.map(function (u) {
       return '<tr class="hover:bg-cream-50/60 transition">' +
         '<td class="py-3 px-4 font-bold text-slate-800">' + u.nama + '</td>' +
         '<td class="py-3 px-4 font-mono text-xs dynamic-theme-text">' + u.username + '</td>' +
         '<td class="py-3 px-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cream-100 text-slate-700">' + u.role + '</span></td>' +
         '<td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ' + (u.status === 'Aktif' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700') + '">' + u.status + '</span></td>' +
         '<td class="py-3 px-4 text-right space-x-1">' +
-          '<button onclick="editUser(\'' + u.userId + '\')" class="p-1.5 rounded-lg text-slate-600 hover:text-slate-900"><i class="fa-solid fa-pen"></i></button>' +
-          (u.username !== 'admin' ? '<button onclick="deleteUserConfirm(\'' + u.userId + '\')" class="p-1.5 rounded-lg text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>' : '') +
+        '<button onclick="editUser(\'' + u.userId + '\')" class="p-1.5 rounded-lg text-slate-600 hover:text-slate-900"><i class="fa-solid fa-pen"></i></button>' +
+        (u.username !== 'admin' ? '<button onclick="deleteUserConfirm(\'' + u.userId + '\')" class="p-1.5 rounded-lg text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>' : '') +
         '</td>' +
-      '</tr>';
+        '</tr>';
     }).join('');
   }
 
@@ -2880,7 +2889,7 @@
     const helpPwd = document.getElementById('helpUserPassword');
 
     if (userId) {
-      const u = DB.users.find(function(item) { return item.userId === userId; });
+      const u = DB.users.find(function (item) { return item.userId === userId; });
       if (!u) return;
       document.getElementById('modalUserTitle').innerText = 'Edit Akun Pengguna';
       document.getElementById('userFormId').value = u.userId;
@@ -2931,14 +2940,14 @@
     if (btnSubmit) btnSubmit.disabled = true;
     if (btnText) btnText.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Menyimpan...';
 
-    callBackendApi('saveUser', uData, function(res) {
+    callBackendApi('saveUser', uData, function (res) {
       if (btnSubmit) btnSubmit.disabled = false;
       if (btnText) btnText.innerText = 'Simpan Akun';
 
       if (res && res.success) {
         uData.userId = res.userId || id || ('USR-' + Date.now());
         if (id) {
-          const idx = DB.users.findIndex(function(u) { return u.userId === id; });
+          const idx = DB.users.findIndex(function (u) { return u.userId === id; });
           if (idx !== -1) {
             if (!pwd) uData.password = DB.users[idx].password;
             DB.users[idx] = uData;
@@ -2954,7 +2963,7 @@
       } else {
         showToast(res?.error || res?.message || 'Gagal menyimpan akun ke Google Sheets', 'error');
       }
-    }, function(err) {
+    }, function (err) {
       if (btnSubmit) btnSubmit.disabled = false;
       if (btnText) btnText.innerText = 'Simpan Akun';
       showToast('Koneksi server gagal: ' + err.message, 'error');
@@ -2962,11 +2971,11 @@
   }
 
   function deleteUserConfirm(userId) {
-    const u = DB.users.find(function(item) { return item.userId === userId; });
+    const u = DB.users.find(function (item) { return item.userId === userId; });
     if (!u) return;
 
-    promptConfirmation('Hapus Akun Pengguna', 'Hapus akun "' + u.nama + '"?', function() {
-      DB.users = DB.users.filter(function(item) { return item.userId !== userId; });
+    promptConfirmation('Hapus Akun Pengguna', 'Hapus akun "' + u.nama + '"?', function () {
+      DB.users = DB.users.filter(function (item) { return item.userId !== userId; });
       DB.save();
       showToast('Akun telah dihapus.');
       renderUsersView();
@@ -2981,11 +2990,6 @@
     document.getElementById('setSchoolAddress').value = DB.settings.schoolAddress || '';
     document.getElementById('setPrincipalName').value = DB.settings.principalName || '';
     document.getElementById('setPrincipalNIP').value = DB.settings.principalNIP || '';
-
-    const gasInput = document.getElementById('setGasApiUrl');
-    if (gasInput) {
-      gasInput.value = localStorage.getItem('DS_GAS_API_URL') || GAS_API_URL || '';
-    }
   }
 
   function saveAppSettings() {
@@ -2995,16 +2999,9 @@
     DB.settings.principalName = document.getElementById('setPrincipalName').value.trim();
     DB.settings.principalNIP = document.getElementById('setPrincipalNIP').value.trim();
 
-    const gasInput = document.getElementById('setGasApiUrl');
-    if (gasInput) {
-      const newUrl = gasInput.value.trim();
-      localStorage.setItem('DS_GAS_API_URL', newUrl);
-      GAS_API_URL = newUrl;
-    }
-
     DB.save();
     updateAppIdentityUI();
-    showToast('Pengaturan identitas sekolah & endpoint berhasil disimpan!');
+    showToast('Pengaturan identitas sekolah berhasil disimpan!');
     syncSettingsToBackend(DB.settings);
   }
 
@@ -3020,47 +3017,16 @@
   }
 
   function confirmResetData() {
-    promptConfirmation('Reset Data Uji Coba', 'Seluruh modifikasi data lokal akan dikembalikan ke data contoh bawaan sekolah. Lanjutkan?', function() {
+    promptConfirmation('Reset Data Uji Coba', 'Seluruh modifikasi data lokal akan dikembalikan ke data contoh bawaan sekolah. Lanjutkan?', function () {
       localStorage.clear();
       location.reload();
     });
   }
 
   function syncDatabaseToSheets() {
-    const btn = document.getElementById('btnSyncDatabase');
-    const icon = document.getElementById('iconSyncDatabase');
-    const text = document.getElementById('textSyncDatabase');
-
-    icon.className = 'fa-solid fa-spinner fa-spin text-sm';
-    text.innerText = 'Menyinkronkan...';
-    btn.disabled = true;
-
-    const payload = {
-      assets: DB.assets,
-      buildings: DB.buildings,
-      rooms: DB.rooms,
-      maintenance: DB.maintenance,
-      procurements: DB.procurements,
-      disposals: DB.disposals,
-      settings: DB.settings
-    };
-
-    callBackendApi('syncAllData', payload, function(res) {
-      icon.className = 'fa-solid fa-cloud-arrow-up text-sm';
-      text.innerText = 'Sinkron Database';
-      btn.disabled = false;
-
-      if (res && res.success) {
-        showToast(res.message || 'Sinkronisasi berhasil!', 'success');
-        DB.logActivity('Sinkronisasi massal data ke Google Sheets', 'fa-cloud-arrow-up text-emerald-600');
-      } else {
-        showToast(res?.error || 'Gagal sinkron data.', 'error');
-      }
-    }, function(err) {
-      icon.className = 'fa-solid fa-cloud-arrow-up text-sm';
-      text.innerText = 'Sinkron Database';
-      btn.disabled = false;
-      showToast('Koneksi server gagal: ' + err.message, 'error');
+    syncFromDatabase(function (ok) {
+      if (ok) showToast('Data berhasil diperbarui dari Google Sheets!', 'success');
+      else showToast('Gagal sinkron data dari server.', 'error');
     });
   }
 
@@ -3079,7 +3045,7 @@
     document.getElementById('dropdownUserName').innerText = u.nama;
     document.getElementById('dropdownUserEmail').innerText = u.username + '@sarpras.sch.id';
 
-    const initials = u.nama.split(' ').map(function(n) { return n[0]; }).slice(0, 2).join('').toUpperCase() || 'AD';
+    const initials = u.nama.split(' ').map(function (n) { return n[0]; }).slice(0, 2).join('').toUpperCase() || 'AD';
     document.getElementById('userAvatarText').innerText = initials;
 
     applyRolePermissions();
@@ -3094,7 +3060,57 @@
     }
   }
 
-  window.addEventListener('DOMContentLoaded', function() {
+  function syncFromDatabase(onComplete) {
+    callBackendApi('getInitialData', {}, function (res) {
+      if (res && res.success) {
+        if (Array.isArray(res.assets)) DB.assets = res.assets;
+        if (Array.isArray(res.buildings)) DB.buildings = res.buildings;
+        if (Array.isArray(res.rooms)) DB.rooms = res.rooms;
+        if (Array.isArray(res.users) && res.users.length > 0) DB.users = res.users;
+        if (Array.isArray(res.maintenance)) DB.maintenance = res.maintenance;
+        if (Array.isArray(res.procurements)) DB.procurements = res.procurements;
+        if (Array.isArray(res.disposals)) DB.disposals = res.disposals;
+        if (Array.isArray(res.settings) && res.settings.length > 0) {
+          res.settings.forEach(function (s) {
+            if (s.settingKey) DB.settings[s.settingKey] = s.settingValue;
+          });
+          applySystemTheme(DB.settings.selectedTheme || 'magenta-rose', DB.settings.selectedFont || 'Inter');
+          updateAppIdentityUI();
+        }
+        DB.save();
+        populateGedungFilterDropdown();
+
+        if (DB.currentUser) {
+          const uRole = DB.currentUser.role;
+          if (uRole === 'Guest' || uRole === 'Guest/Tamu' || uRole === 'Tamu') {
+            // Tetap di modul pelayanan
+          } else {
+            refreshDashboard();
+            const assetsView = document.getElementById('view-assets');
+            if (assetsView && !assetsView.classList.contains('hidden')) renderAssetsTable();
+            const maintView = document.getElementById('view-maintenance');
+            if (maintView && !maintView.classList.contains('hidden')) renderMaintenanceView();
+            const procView = document.getElementById('view-procurements');
+            if (procView && !procView.classList.contains('hidden')) renderProcurementAndDisposal();
+            const bgView = document.getElementById('view-buildings');
+            if (bgView && !bgView.classList.contains('hidden')) renderBuildingsView();
+            const rmView = document.getElementById('view-rooms');
+            if (rmView && !rmView.classList.contains('hidden')) renderRoomsView();
+            const usersView = document.getElementById('view-users');
+            if (usersView && !usersView.classList.contains('hidden')) renderUsersView();
+          }
+        }
+        if (onComplete) onComplete(true);
+      } else {
+        if (onComplete) onComplete(false);
+      }
+    }, function (err) {
+      console.warn('Sinkronisasi otomatis backend:', err);
+      if (onComplete) onComplete(false);
+    });
+  }
+
+  window.addEventListener('DOMContentLoaded', function () {
     applySystemTheme(DB.settings.selectedTheme || 'magenta-rose', DB.settings.selectedFont || 'Inter');
     updateAppIdentityUI();
 
@@ -3102,32 +3118,7 @@
       initAppSession();
     }
 
-    callBackendApi('getInitialData', {}, function(res) {
-      if (res && res.success) {
-        if (res.assets && res.assets.length > 0) DB.assets = res.assets;
-        if (res.buildings && res.buildings.length > 0) DB.buildings = res.buildings;
-        if (res.rooms && res.rooms.length > 0) DB.rooms = res.rooms;
-        if (res.users && res.users.length > 0) DB.users = res.users;
-        if (res.maintenance && res.maintenance.length > 0) DB.maintenance = res.maintenance;
-        if (res.procurements && res.procurements.length > 0) DB.procurements = res.procurements;
-        if (res.disposals && res.disposals.length > 0) DB.disposals = res.disposals;
-        if (res.settings && res.settings.length > 0) {
-          res.settings.forEach(function(s) {
-            DB.settings[s.settingKey] = s.settingValue;
-          });
-          applySystemTheme(DB.settings.selectedTheme || 'magenta-rose', DB.settings.selectedFont || 'Inter');
-          updateAppIdentityUI();
-        }
-        DB.save();
-        if (DB.currentUser) {
-          const uRole = DB.currentUser.role;
-          if (uRole === 'Guest' || uRole === 'Guest/Tamu' || uRole === 'Tamu') {
-            navigateTo('respon');
-          } else {
-            refreshDashboard();
-          }
-        }
-      }
-    });
+    // Tarik data terbaru secara real-time langsung dari Google Sheets
+    syncFromDatabase();
   });
 </script>
