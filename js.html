@@ -3060,7 +3060,51 @@
     }
   }
 
+  let syncBannerTimeout = null;
+
+  function setSyncBannerStatus(status, message) {
+    const banner = document.getElementById('globalSyncBanner');
+    const content = document.getElementById('globalSyncContent');
+    const icon = document.getElementById('globalSyncIcon');
+    const text = document.getElementById('globalSyncText');
+
+    if (!banner || !content || !icon || !text) return;
+    if (syncBannerTimeout) clearTimeout(syncBannerTimeout);
+
+    if (status === 'syncing') {
+      content.className = 'inline-flex items-center space-x-2.5 px-4 py-2 rounded-full shadow-xl border backdrop-blur-md text-xs font-semibold bg-slate-900/90 text-white border-slate-700 pointer-events-auto transition-all duration-300';
+      icon.innerHTML = '<i class="fa-solid fa-arrows-rotate fa-spin text-amber-400 text-sm"></i>';
+      text.innerText = message || 'Menyinkronkan data dengan Google Sheets... Harap tunggu sebentar.';
+      banner.classList.remove('-translate-y-full', 'opacity-0');
+      banner.classList.add('translate-y-0', 'opacity-100');
+    } else if (status === 'success') {
+      content.className = 'inline-flex items-center space-x-2.5 px-4 py-2 rounded-full shadow-xl border backdrop-blur-md text-xs font-bold bg-emerald-950/90 text-emerald-100 border-emerald-500/50 pointer-events-auto transition-all duration-300';
+      icon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>';
+      text.innerText = message || 'Database berhasil disinkronkan! Aplikasi siap digunakan.';
+      banner.classList.remove('-translate-y-full', 'opacity-0');
+      banner.classList.add('translate-y-0', 'opacity-100');
+
+      syncBannerTimeout = setTimeout(function () {
+        banner.classList.add('-translate-y-full', 'opacity-0');
+        banner.classList.remove('translate-y-0', 'opacity-100');
+      }, 2500);
+    } else if (status === 'error') {
+      content.className = 'inline-flex items-center space-x-2.5 px-4 py-2 rounded-full shadow-xl border backdrop-blur-md text-xs font-semibold bg-rose-950/90 text-rose-100 border-rose-500/50 pointer-events-auto transition-all duration-300';
+      icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-400 text-sm"></i>';
+      text.innerText = message || 'Koneksi ke database gagal. Memakai data offline lokal.';
+      banner.classList.remove('-translate-y-full', 'opacity-0');
+      banner.classList.add('translate-y-0', 'opacity-100');
+
+      syncBannerTimeout = setTimeout(function () {
+        banner.classList.add('-translate-y-full', 'opacity-0');
+        banner.classList.remove('translate-y-0', 'opacity-100');
+      }, 3500);
+    }
+  }
+
   function syncFromDatabase(onComplete) {
+    setSyncBannerStatus('syncing');
+
     callBackendApi('getInitialData', {}, function (res) {
       if (res && res.success) {
         if (Array.isArray(res.assets)) DB.assets = res.assets;
@@ -3074,38 +3118,40 @@
           res.settings.forEach(function (s) {
             if (s.settingKey) DB.settings[s.settingKey] = s.settingValue;
           });
-          applySystemTheme(DB.settings.selectedTheme || 'magenta-rose', DB.settings.selectedFont || 'Inter');
-          updateAppIdentityUI();
         }
+
+        // Terapkan perubahan tema & font dari Google Sheets secara langsung
+        applySystemTheme(DB.settings.selectedTheme || 'magenta-rose', DB.settings.selectedFont || 'Inter');
+        updateAppIdentityUI();
         DB.save();
         populateGedungFilterDropdown();
 
-        if (DB.currentUser) {
-          const uRole = DB.currentUser.role;
-          if (uRole === 'Guest' || uRole === 'Guest/Tamu' || uRole === 'Tamu') {
-            // Tetap di modul pelayanan
-          } else {
-            refreshDashboard();
-            const assetsView = document.getElementById('view-assets');
-            if (assetsView && !assetsView.classList.contains('hidden')) renderAssetsTable();
-            const maintView = document.getElementById('view-maintenance');
-            if (maintView && !maintView.classList.contains('hidden')) renderMaintenanceView();
-            const procView = document.getElementById('view-procurements');
-            if (procView && !procView.classList.contains('hidden')) renderProcurementAndDisposal();
-            const bgView = document.getElementById('view-buildings');
-            if (bgView && !bgView.classList.contains('hidden')) renderBuildingsView();
-            const rmView = document.getElementById('view-rooms');
-            if (rmView && !rmView.classList.contains('hidden')) renderRoomsView();
-            const usersView = document.getElementById('view-users');
-            if (usersView && !usersView.classList.contains('hidden')) renderUsersView();
-          }
-        }
+        // Perbarui data pada dashboard dan view yang sedang aktif
+        refreshDashboard();
+        const assetsView = document.getElementById('view-assets');
+        if (assetsView && !assetsView.classList.contains('hidden')) renderAssetsTable();
+        const maintView = document.getElementById('view-maintenance');
+        if (maintView && !maintView.classList.contains('hidden')) renderMaintenanceView();
+        const procView = document.getElementById('view-procurements');
+        if (procView && !procView.classList.contains('hidden')) renderProcurementAndDisposal();
+        const bgView = document.getElementById('view-buildings');
+        if (bgView && !bgView.classList.contains('hidden')) renderBuildingsView();
+        const rmView = document.getElementById('view-rooms');
+        if (rmView && !rmView.classList.contains('hidden')) renderRoomsView();
+        const usersView = document.getElementById('view-users');
+        if (usersView && !usersView.classList.contains('hidden')) renderUsersView();
+
+        setSyncBannerStatus('success', 'Database berhasil disinkronkan! Aplikasi siap digunakan.');
+        showToast('Sinkronisasi database berhasil! Tema & data telah diperbarui.', 'success');
+
         if (onComplete) onComplete(true);
       } else {
+        setSyncBannerStatus('error', 'Koneksi ke database gagal. Memakai data offline lokal.');
         if (onComplete) onComplete(false);
       }
     }, function (err) {
       console.warn('Sinkronisasi otomatis backend:', err);
+      setSyncBannerStatus('error', 'Koneksi ke server gagal: ' + (err.message || 'Periksa jaringan'));
       if (onComplete) onComplete(false);
     });
   }
