@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Manajemen Aset Sekolah</title>
-  <link rel="icon" href="https://cdn.phototourl.com/free/2026-08-26-3fd98ab9-7ffc-433e-aef4-56937291ec2f.jpg" />
+  <title>DIGITAS SARPRAS - Manajemen Aset Sekolah</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,10 +17,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   
   <!-- QR Code Generator Library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   
   <!-- HTML5 QR Code Scanner Library -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script defer src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <!-- Pemuatan Modular CSS & Tailwind Config (Google Apps Script Engine) -->
   <?!= include('css'); ?>
@@ -567,7 +566,7 @@
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
                   <i class="fa-solid fa-magnifying-glass text-xs"></i>
                 </span>
-                <input type="text" id="assetSearchInput" oninput="renderAssetsTable()" placeholder="Cari kode, nama, merk..."
+                <input type="text" id="assetSearchInput" oninput="debouncedRenderAssetsTable()" placeholder="Cari kode, nama, merk..."
                   class="w-full pl-9 pr-3 py-2 bg-cream-50 border border-cream-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-magenta-500">
               </div>
               <div>
